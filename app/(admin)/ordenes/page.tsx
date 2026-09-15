@@ -14,7 +14,7 @@ import {
 
 interface OrdenCard {
   id: number | string;
-  numero_ot: string;
+  numero_ot?: number | string;
   estado: string;
   tipo_servicio: string;
   descripcion_cliente: string;
@@ -143,7 +143,7 @@ export default function TableroOrdenesPage() {
 
   const filteredOrdenes = ordenes.filter((o) => {
     const term = searchTerm.toLowerCase();
-    const ot = o.numero_ot?.toLowerCase() || '';
+    const ot = (o.numero_ot !== undefined && o.numero_ot !== null) ? String(o.numero_ot).toLowerCase() : '';
     const patente = o.vehiculos?.patente?.toLowerCase() || '';
     const cliente = `${o.clientes?.nombre || ''} ${o.clientes?.apellido || ''}`.toLowerCase();
     return ot.includes(term) || patente.includes(term) || cliente.includes(term);
@@ -239,7 +239,9 @@ export default function TableroOrdenesPage() {
                       {/* Cabecera Tarjeta */}
                       <div className="flex items-center justify-between">
                         <span className="font-extrabold text-xs text-slate-900">
-                          {ot.numero_ot || `OT #${ot.id}`}
+                          {ot.numero_ot !== undefined && ot.numero_ot !== null
+                            ? (String(ot.numero_ot).startsWith('OT') ? ot.numero_ot : `OT #${ot.numero_ot}`)
+                            : `OT #${ot.id}`}
                         </span>
                         <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-200">
                           {ot.tipo_servicio}

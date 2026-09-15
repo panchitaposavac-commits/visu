@@ -44,7 +44,7 @@ export interface Vehiculo {
 
 export interface OrdenTrabajo {
   id?: number | string;
-  numero_ot?: string;
+  numero_ot?: number | string;
   cliente_id?: number | string;
   vehiculo_id?: number | string;
   estado: EstadoOrden;

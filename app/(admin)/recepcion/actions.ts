@@ -14,41 +14,6 @@ function sanitizeString(str: string): string {
   return (str || '').trim();
 }
 
-/**
- * Genera el siguiente número de OT correlativo de forma amigable (Ej: OT-1001, OT-1002)
- */
-async function generateNextOTNumber(): Promise<string> {
-  try {
-    const { data, error } = await supabase
-      .from('ordenes_trabajo')
-      .select('numero_ot')
-      .order('id', { ascending: false })
-      .limit(1);
-
-    if (error || !data || data.length === 0) {
-      return 'OT-1001';
-    }
-
-    const lastOtStr = data[0].numero_ot;
-    if (typeof lastOtStr === 'string') {
-      const match = lastOtStr.match(/\d+/);
-      if (match) {
-        const nextNum = parseInt(match[0], 10) + 1;
-        return `OT-${nextNum}`;
-      }
-    }
-
-    const { count } = await supabase
-      .from('ordenes_trabajo')
-      .select('*', { count: 'exact', head: true });
-
-    const nextCorrelative = 1000 + (count ? count + 1 : 1);
-    return `OT-${nextCorrelative}`;
-  } catch {
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    return `OT-${randomSuffix}`;
-  }
-}
 
 /**
  * Server Action principal para registrar la recepción completa del vehículo en Supabase
@@ -204,12 +169,9 @@ export async function registrarRecepcionVehiculo(
     // -------------------------------------------------------------
     // 4. CREACIÓN DE LA ORDEN DE TRABAJO (tabla: ordenes_trabajo)
     // -------------------------------------------------------------
-    const numero_ot = await generateNextOTNumber();
-
     const { data: nuevaOrden, error: insertOrdenError } = await supabase
       .from('ordenes_trabajo')
       .insert({
-        numero_ot,
         cliente_id: clienteId,
         vehiculo_id: vehiculoId,
         estado: 'recibido',
@@ -228,7 +190,9 @@ export async function registrarRecepcionVehiculo(
     }
 
     const ordenId = nuevaOrden.id;
-    const finalNumeroOT = nuevaOrden.numero_ot || numero_ot;
+    const finalNumeroOT = nuevaOrden.numero_ot !== undefined && nuevaOrden.numero_ot !== null
+      ? `OT #${nuevaOrden.numero_ot}`
+      : `OT #${ordenId}`;
 
     // -------------------------------------------------------------
     // 5. REGISTRO DE EVIDENCIAS FOTOGRÁFICAS (tabla: evidencias_orden)
