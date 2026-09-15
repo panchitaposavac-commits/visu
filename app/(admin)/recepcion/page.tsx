@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import {
   AREAS_EVIDENCIA,
+  TIPO_SERVICIO_LABELS,
   type AreaEvidencia,
   type ClientFormData,
   type VehicleFormData,
@@ -39,6 +40,23 @@ import {
   type ReceptionActionResult,
   type TipoServicio,
 } from '@/types/visu';
+
+const OPCIONES_TIPO_SERVICIO: Array<{
+  value: TipoServicio;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: 'mantencion',
+    label: 'Mantención Preventiva',
+    description: 'Pautas periódicas, cambios de aceite y filtros.',
+  },
+  {
+    value: 'reparacion',
+    label: 'Reparación Correctiva',
+    description: 'Falla mecánica, ruido anómalo o avería específica.',
+  },
+];
 
 // =========================================================================
 // PASOS DEL WIZARD (CON TÍTULOS Y DESCRIPCIONES COMPACTAS)
@@ -76,7 +94,7 @@ export default function RecepcionWizardPage() {
   });
 
   const [diagnosticData, setDiagnosticData] = useState<DiagnosticFormData>({
-    tipo_servicio: 'Mantención Preventiva',
+    tipo_servicio: 'mantencion',
     descripcion_cliente: '',
     fecha_estimada_entrega: '',
   });
@@ -356,7 +374,7 @@ export default function RecepcionWizardPage() {
     setCurrentStep(1);
     setClientData({ rut_dni: '', nombre: '', apellido: '', correo: '', telefono: '' });
     setVehicleData({ patente: '', marca: '', modelo: '', anio: new Date().getFullYear().toString(), kilometraje: '', color: '' });
-    setDiagnosticData({ tipo_servicio: 'Mantención Preventiva', descripcion_cliente: '', fecha_estimada_entrega: '' });
+    setDiagnosticData({ tipo_servicio: 'mantencion', descripcion_cliente: '', fecha_estimada_entrega: '' });
     setEvidences({
       Frontal: { area: 'Frontal', file: null, previewUrl: null, uploadedUrl: null, isUploading: false, error: null },
       Capó: { area: 'Capó', file: null, previewUrl: null, uploadedUrl: null, isUploading: false, error: null },
@@ -454,7 +472,7 @@ export default function RecepcionWizardPage() {
               <div className="flex items-center justify-between">
                 <span className="font-bold text-xs uppercase tracking-wider text-slate-700">Servicio</span>
                 <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-orange-100 text-orange-800">
-                  {successResult.data.orden.tipo_servicio}
+                  {TIPO_SERVICIO_LABELS[successResult.data.orden.tipo_servicio] || successResult.data.orden.tipo_servicio}
                 </span>
               </div>
 
@@ -1031,12 +1049,12 @@ export default function RecepcionWizardPage() {
               </label>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {(['Mantención Preventiva', 'Reparación Correctiva'] as TipoServicio[]).map((tipo) => {
-                  const isSelected = diagnosticData.tipo_servicio === tipo;
+                {OPCIONES_TIPO_SERVICIO.map((opcion) => {
+                  const isSelected = diagnosticData.tipo_servicio === opcion.value;
                   return (
                     <div
-                      key={tipo}
-                      onClick={() => setDiagnosticData((prev) => ({ ...prev, tipo_servicio: tipo }))}
+                      key={opcion.value}
+                      onClick={() => setDiagnosticData((prev) => ({ ...prev, tipo_servicio: opcion.value }))}
                       className={`cursor-pointer p-3.5 rounded-xl border-2 transition-all flex items-start gap-3 active:scale-[0.99] ${
                         isSelected
                           ? 'border-orange-600 bg-orange-50/60 ring-2 ring-orange-600/10 shadow-xs'
@@ -1052,11 +1070,9 @@ export default function RecepcionWizardPage() {
                       </div>
 
                       <div>
-                        <p className="font-bold text-sm text-slate-900">{tipo}</p>
+                        <p className="font-bold text-sm text-slate-900">{opcion.label}</p>
                         <p className="text-[11px] text-slate-600 mt-0.5">
-                          {tipo === 'Mantención Preventiva'
-                            ? 'Pautas periódicas, cambios de aceite y filtros.'
-                            : 'Falla mecánica, ruido anómalo o avería específica.'}
+                          {opcion.description}
                         </p>
                       </div>
                     </div>

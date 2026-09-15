@@ -14,6 +14,18 @@ function sanitizeString(str: string): string {
   return (str || '').trim();
 }
 
+/**
+ * Mapea defensivamente el tipo de servicio al enum soportado por PostgreSQL ('mantencion' | 'reparacion')
+ */
+function normalizeTipoServicio(val: unknown): TipoServicio {
+  if (typeof val !== 'string') return 'mantencion';
+  const clean = val.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+  if (clean.includes('reparac') || clean === 'reparacion') {
+    return 'reparacion';
+  }
+  return 'mantencion';
+}
+
 
 /**
  * Server Action principal para registrar la recepción completa del vehículo en Supabase
@@ -52,7 +64,7 @@ export async function registrarRecepcionVehiculo(
       };
     }
 
-    const tipo_servicio: TipoServicio = payload.diagnostico.tipo_servicio;
+    const tipo_servicio: TipoServicio = normalizeTipoServicio(payload.diagnostico.tipo_servicio);
     const descripcion_cliente = sanitizeString(payload.diagnostico.descripcion_cliente);
     const fecha_estimada_entrega = sanitizeString(payload.diagnostico.fecha_estimada_entrega);
 

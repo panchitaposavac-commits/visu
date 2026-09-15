@@ -2,9 +2,22 @@
 // Tipos e Interfaces Estrictas para Visú
 // ==========================================
 
-export type TipoServicio = 'Mantención Preventiva' | 'Reparación Correctiva';
+export type TipoServicio = 'mantencion' | 'reparacion';
 
-export type EstadoOrden = 'recibido' | 'en_diagnostico' | 'en_reparacion' | 'esperando_repuestos' | 'listo_entrega' | 'entregado';
+export const TIPO_SERVICIO_LABELS: Record<TipoServicio, string> = {
+  mantencion: 'Mantención Preventiva',
+  reparacion: 'Reparación Correctiva',
+};
+
+export type EstadoOrden = 'recibido' | 'en_proceso' | 'listo' | 'entregado' | 'cancelado';
+
+export const ESTADO_ORDEN_LABELS: Record<EstadoOrden, string> = {
+  recibido: 'Recibido',
+  en_proceso: 'En Proceso',
+  listo: 'Listo',
+  entregado: 'Entregado',
+  cancelado: 'Cancelado',
+};
 
 export type AreaEvidencia =
   | 'Frontal'

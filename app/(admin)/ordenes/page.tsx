@@ -11,6 +11,7 @@ import {
   User,
   Calendar,
 } from 'lucide-react';
+import { TIPO_SERVICIO_LABELS, type TipoServicio } from '@/types/visu';
 
 interface OrdenCard {
   id: number | string;
@@ -33,9 +34,9 @@ interface OrdenCard {
 
 const COLUMNAS_ESTADO = [
   { key: 'recibido', label: 'Recibidos', bgBadge: 'bg-blue-100 text-blue-800' },
-  { key: 'en_diagnostico', label: 'En Diagnóstico', bgBadge: 'bg-amber-100 text-amber-800' },
-  { key: 'en_reparacion', label: 'En Reparación', bgBadge: 'bg-purple-100 text-purple-800' },
-  { key: 'listo_entrega', label: 'Listo para Entrega', bgBadge: 'bg-emerald-100 text-emerald-800' },
+  { key: 'en_proceso', label: 'En Proceso', bgBadge: 'bg-amber-100 text-amber-800' },
+  { key: 'listo', label: 'Listos para Entrega', bgBadge: 'bg-emerald-100 text-emerald-800' },
+  { key: 'entregado', label: 'Entregados', bgBadge: 'bg-slate-100 text-slate-800' },
 ];
 
 export default function TableroOrdenesPage() {
@@ -244,7 +245,7 @@ export default function TableroOrdenesPage() {
                             : `OT #${ot.id}`}
                         </span>
                         <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-200">
-                          {ot.tipo_servicio}
+                          {TIPO_SERVICIO_LABELS[ot.tipo_servicio as TipoServicio] || ot.tipo_servicio}
                         </span>
                       </div>
 
