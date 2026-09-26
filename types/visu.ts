@@ -9,13 +9,24 @@ export const TIPO_SERVICIO_LABELS: Record<TipoServicio, string> = {
   reparacion: 'Reparación Correctiva',
 };
 
-export type EstadoOrden = 'recibido' | 'en_proceso' | 'listo' | 'entregado' | 'cancelado';
+export type EstadoOrden =
+  | 'recibido'
+  | 'en_revision'
+  | 'esperando_aprobacion'
+  | 'en_reparacion'
+  | 'listo'
+  | 'entregado'
+  | 'en_proceso'
+  | 'cancelado';
 
 export const ESTADO_ORDEN_LABELS: Record<EstadoOrden, string> = {
   recibido: 'Recibido',
-  en_proceso: 'En Proceso',
-  listo: 'Listo',
+  en_revision: 'En Revisión',
+  esperando_aprobacion: 'Aceptación Presupuesto',
+  en_reparacion: 'En Reparación',
+  listo: 'Listo para Entrega',
   entregado: 'Entregado',
+  en_proceso: 'En Proceso',
   cancelado: 'Cancelado',
 };
 

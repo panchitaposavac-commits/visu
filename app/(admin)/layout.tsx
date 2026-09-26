@@ -49,11 +49,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col md:flex-row antialiased selection:bg-orange-500 selection:text-white">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col md:flex-row antialiased selection:bg-orange-500 selection:text-white print:bg-white print:min-h-0 print:text-black">
       {/* ============================================================ */}
       {/* 1. SIDEBAR ESCRITORIO (Fija a la izquierda en md/lg)          */}
       {/* ============================================================ */}
-      <aside className="hidden md:flex md:w-64 lg:w-72 flex-col bg-white border-r border-slate-200 shrink-0 select-none">
+      <aside className="hidden md:flex md:w-64 lg:w-72 flex-col bg-white border-r border-slate-200 shrink-0 select-none print:hidden">
         {/* Header de la Sidebar con Logo */}
         <div className="h-16 px-6 flex items-center gap-3 border-b border-slate-100">
           <div className="w-10 h-10 rounded-xl bg-orange-600 flex items-center justify-center text-white shadow-sm shadow-orange-200">
@@ -171,8 +171,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       {/* ============================================================ */}
       {/* 2. HEADER SUPERIOR COMPACTO (Mobile & Desktop)              */}
       {/* ============================================================ */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-14 md:h-16 bg-white border-b border-slate-200 px-4 md:px-8 flex items-center justify-between sticky top-0 z-30 shadow-2xs">
+      <div className="flex-1 flex flex-col min-w-0 print:w-full print:block">
+        <header className="h-14 md:h-16 bg-white border-b border-slate-200 px-4 md:px-8 flex items-center justify-between sticky top-0 z-30 shadow-2xs print:hidden">
           {/* Logo y Nombre en Móvil */}
           <div className="flex items-center gap-2.5">
             <div className="md:hidden w-8 h-8 rounded-lg bg-orange-600 flex items-center justify-center text-white shadow-xs">
@@ -210,7 +210,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         {/* ============================================================ */}
         {/* 3. CONTENEDOR PRINCIPAL FLUIDO CON SAFE BOTTOM PADDING      */}
         {/* ============================================================ */}
-        <main className="flex-1 w-full max-w-5xl mx-auto p-3.5 sm:p-6 md:p-8 pb-28 md:pb-8 overflow-x-hidden">
+        <main className="flex-1 w-full max-w-5xl mx-auto p-3.5 sm:p-6 md:p-8 pb-28 md:pb-8 overflow-x-hidden print:p-0 print:max-w-none print:m-0 print:overflow-visible print:w-full">
           {children}
         </main>
       </div>
@@ -220,7 +220,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       {/* ============================================================ */}
       <nav
         aria-label="Navegación móvil inferior"
-        className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 z-40 px-3 py-2 flex items-center justify-around shadow-lg select-none"
+        className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 z-40 px-3 py-2 flex items-center justify-around shadow-lg select-none print:hidden"
         style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
       >
         {NAV_ITEMS.map((item) => {

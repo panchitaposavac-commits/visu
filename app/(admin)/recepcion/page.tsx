@@ -1,24 +1,23 @@
 'use client';
 
-import React, { useState, useRef, useTransition } from 'react';
+import React, { useState, useRef, useEffect, useTransition } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 import { registrarRecepcionVehiculo } from './actions';
 import {
+  Wrench,
   User,
   Car,
   Camera,
-  ClipboardCheck,
+  Calendar,
   ChevronRight,
   ChevronLeft,
   CheckCircle2,
   AlertCircle,
   Trash2,
   Printer,
-  PlusCircle,
   ArrowRight,
   Sparkles,
-  Calendar,
   Phone,
   Mail,
   Gauge,
@@ -28,7 +27,50 @@ import {
   Eye,
   X,
   ImageIcon,
+  ClipboardList,
+  Mic,
+  MicOff,
 } from 'lucide-react';
+
+// Declaraciones de tipos para Web Speech API
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+  message?: string;
+}
+
+interface SpeechRecognitionAlternative {
+  transcript: string;
+  confidence: number;
+}
+
+interface SpeechRecognitionResult {
+  isFinal: boolean;
+  length: number;
+  [index: number]: SpeechRecognitionAlternative;
+}
+
+interface SpeechRecognitionResultList {
+  length: number;
+  [index: number]: SpeechRecognitionResult;
+}
+
+interface SpeechRecognitionEvent extends Event {
+  resultIndex: number;
+  results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionInstance extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start: () => void;
+  stop: () => void;
+  abort: () => void;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+  onend: (() => void) | null;
+  onstart: (() => void) | null;
+}
 import {
   AREAS_EVIDENCIA,
   TIPO_SERVICIO_LABELS,
@@ -59,13 +101,14 @@ const OPCIONES_TIPO_SERVICIO: Array<{
 ];
 
 // =========================================================================
-// PASOS DEL WIZARD (CON TÍTULOS Y DESCRIPCIONES COMPACTAS)
+// PASOS DEL WIZARD (CON TÍTULOS Y DESCRIPCIONES COMPACTAS - 5 PASOS)
 // =========================================================================
 const WIZARD_STEPS = [
-  { step: 1, title: 'Datos del Cliente', short: 'Cliente', icon: User, desc: 'Identificación y contacto' },
-  { step: 2, title: 'Datos del Vehículo', short: 'Vehículo', icon: Car, desc: 'Patente y kilometraje' },
-  { step: 3, title: 'Evidencias Fotográficas', short: 'Fotos', icon: Camera, desc: '5 áreas de inspección' },
-  { step: 4, title: 'Diagnóstico y Plazos', short: 'Servicio', icon: ClipboardCheck, desc: 'Requerimiento y entrega' },
+  { step: 1, title: 'Tipo de Servicio y Motivo', short: 'Servicio', icon: Wrench, desc: 'Tipo de ingreso y requerimiento' },
+  { step: 2, title: 'Datos del Cliente', short: 'Cliente', icon: User, desc: 'Identificación y contacto' },
+  { step: 3, title: 'Datos del Vehículo', short: 'Vehículo', icon: Car, desc: 'Patente y kilometraje' },
+  { step: 4, title: 'Evidencias Fotográficas', short: 'Fotos', icon: Camera, desc: '5 áreas de inspección' },
+  { step: 5, title: 'Compromiso y Entrega', short: 'Entrega', icon: Calendar, desc: 'Plazos y confirmación final' },
 ];
 
 export default function RecepcionWizardPage() {
@@ -76,6 +119,12 @@ export default function RecepcionWizardPage() {
   // -----------------------------------------------------------------------
   // ESTADOS DEL FORMULARIO
   // -----------------------------------------------------------------------
+  const [diagnosticData, setDiagnosticData] = useState<DiagnosticFormData>({
+    tipo_servicio: 'mantencion',
+    descripcion_cliente: '',
+    fecha_estimada_entrega: '',
+  });
+
   const [clientData, setClientData] = useState<ClientFormData>({
     rut_dni: '',
     nombre: '',
@@ -93,12 +142,6 @@ export default function RecepcionWizardPage() {
     color: '',
   });
 
-  const [diagnosticData, setDiagnosticData] = useState<DiagnosticFormData>({
-    tipo_servicio: 'mantencion',
-    descripcion_cliente: '',
-    fecha_estimada_entrega: '',
-  });
-
   // Estado de las 5 áreas de fotos fijas
   const [evidences, setEvidences] = useState<Record<AreaEvidencia, EvidenceFileState>>({
     Frontal: { area: 'Frontal', file: null, previewUrl: null, uploadedUrl: null, isUploading: false, error: null },
@@ -114,9 +157,187 @@ export default function RecepcionWizardPage() {
   // Resultado de éxito al completar
   const [successResult, setSuccessResult] = useState<Extract<ReceptionActionResult, { success: true }> | null>(null);
 
+  // Estado del Asistente de IA (Groq)
+  const [isOptimizing, setIsOptimizing] = useState<boolean>(false);
+  const [aiSuccessMessage, setAiSuccessMessage] = useState<string | null>(null);
+
+  // Estado de Dictado por Voz (Web Speech API)
+  const [isListening, setIsListening] = useState<boolean>(false);
+  const [speechSupported, setSpeechSupported] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    return Boolean(
+      (window as unknown as { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown }).SpeechRecognition ||
+      (window as unknown as { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown }).webkitSpeechRecognition
+    );
+  });
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+  const textBeforeDictationRef = useRef<string>('');
+
+  // Limpieza de reconocimiento de voz al desmontar
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.abort();
+        } catch {
+          // ignore
+        }
+      }
+    };
+  }, []);
+
+  // Manejador de Dictado por Voz (Speech-to-Text)
+  const handleToggleListening = () => {
+    if (typeof window === 'undefined') return;
+
+    if (isListening) {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch {
+          // ignore
+        }
+      }
+      setIsListening(false);
+      return;
+    }
+
+    const SpeechRecognitionConstructor =
+      (window as unknown as { SpeechRecognition?: new () => SpeechRecognitionInstance; webkitSpeechRecognition?: new () => SpeechRecognitionInstance }).SpeechRecognition ||
+      (window as unknown as { SpeechRecognition?: new () => SpeechRecognitionInstance; webkitSpeechRecognition?: new () => SpeechRecognitionInstance }).webkitSpeechRecognition;
+
+    if (!SpeechRecognitionConstructor) {
+      setGlobalError('Tu navegador no soporta reconocimiento de voz nativo (Web Speech API). Prueba en Chrome o Safari.');
+      setSpeechSupported(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognitionConstructor();
+      recognition.lang = 'es-CL';
+      recognition.continuous = true;
+      recognition.interimResults = true;
+
+      // Guardamos el texto base que existía antes de iniciar este dictado
+      textBeforeDictationRef.current = diagnosticData.descripcion_cliente;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        if (globalError) setGlobalError(null);
+      };
+
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+
+        for (let i = 0; i < event.results.length; i++) {
+          const result = event.results[i];
+          if (result.isFinal) {
+            finalTranscript += result[0].transcript + ' ';
+          } else {
+            interimTranscript += result[0].transcript;
+          }
+        }
+
+        const combinedDictation = (finalTranscript + interimTranscript).trim();
+        const base = textBeforeDictationRef.current.trim();
+        const newText = base
+          ? `${base} ${combinedDictation}`
+          : combinedDictation;
+
+        setDiagnosticData((prev) => ({
+          ...prev,
+          descripcion_cliente: newText,
+        }));
+      };
+
+      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+        console.warn('Speech recognition error:', event.error);
+        if (event.error === 'not-allowed') {
+          setGlobalError('Permiso de micrófono denegado. Permite el acceso al micrófono en los ajustes del navegador.');
+        } else if (event.error !== 'no-speech') {
+          setGlobalError(`Aviso de dictado: ${event.error}`);
+        }
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (err: unknown) {
+      console.error('Error al iniciar SpeechRecognition:', err);
+      setIsListening(false);
+      setGlobalError('No se pudo activar el micrófono. Verifica los permisos del dispositivo.');
+    }
+  };
+
   // -----------------------------------------------------------------------
   // MANEJADORES DE ENTRADA
   // -----------------------------------------------------------------------
+  const handleMejorarConIA = async () => {
+    // Si estaba dictando, detenemos el micrófono antes de procesar con IA
+    if (isListening && recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch {
+        // ignore
+      }
+      setIsListening(false);
+    }
+
+    const rawText = diagnosticData.descripcion_cliente.trim();
+    if (!rawText || isOptimizing) return;
+
+    setIsOptimizing(true);
+    setGlobalError(null);
+    setAiSuccessMessage(null);
+
+    try {
+      const response = await fetch('/api/ordenar-diagnostico', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          texto: rawText,
+          tipo_servicio: diagnosticData.tipo_servicio,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al conectar con el servicio de IA.');
+      }
+
+      if (data.texto_ordenado) {
+        setDiagnosticData((prev) => ({
+          ...prev,
+          descripcion_cliente: data.texto_ordenado,
+        }));
+        setAiSuccessMessage('Texto estructurado con éxito por IA.');
+        setTimeout(() => setAiSuccessMessage(null), 4000);
+      }
+    } catch (err: unknown) {
+      console.error('Error al estructurar diagnóstico con IA:', err);
+      const msg = err instanceof Error ? err.message : 'No se pudo optimizar el texto con IA.';
+      setGlobalError(msg);
+    } finally {
+      setIsOptimizing(false);
+    }
+  };
+
+  const handleDiagnosticChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setDiagnosticData((prev) => ({ ...prev, [name]: value }));
+    if (globalError) setGlobalError(null);
+  };
+
   const handleClientChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setClientData((prev) => ({ ...prev, [name]: value }));
@@ -130,14 +351,6 @@ export default function RecepcionWizardPage() {
     } else {
       setVehicleData((prev) => ({ ...prev, [name]: value }));
     }
-    if (globalError) setGlobalError(null);
-  };
-
-  const handleDiagnosticChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setDiagnosticData((prev) => ({ ...prev, [name]: value }));
     if (globalError) setGlobalError(null);
   };
 
@@ -254,7 +467,21 @@ export default function RecepcionWizardPage() {
   const validateStep = (step: number): boolean => {
     setGlobalError(null);
 
+    // PASO 1: Tipo de servicio y motivo de ingreso
     if (step === 1) {
+      if (!diagnosticData.tipo_servicio) {
+        setGlobalError('Por favor selecciona el tipo de servicio (Mantención o Reparación).');
+        return false;
+      }
+      if (!diagnosticData.descripcion_cliente.trim()) {
+        setGlobalError('Ingresa una descripción del requerimiento o problema indicado por el cliente.');
+        return false;
+      }
+      return true;
+    }
+
+    // PASO 2: Datos del cliente
+    if (step === 2) {
       if (!clientData.rut_dni.trim()) {
         setGlobalError('Por favor ingresa el RUT o DNI del cliente.');
         return false;
@@ -274,7 +501,8 @@ export default function RecepcionWizardPage() {
       return true;
     }
 
-    if (step === 2) {
+    // PASO 3: Datos del vehículo
+    if (step === 3) {
       if (!vehicleData.patente.trim() || vehicleData.patente.trim().length < 4) {
         setGlobalError('Ingresa una patente o matrícula válida.');
         return false;
@@ -294,15 +522,13 @@ export default function RecepcionWizardPage() {
       return true;
     }
 
-    if (step === 3) {
+    // PASO 4: Fotos (opcionales)
+    if (step === 4) {
       return true;
     }
 
-    if (step === 4) {
-      if (!diagnosticData.descripcion_cliente.trim()) {
-        setGlobalError('Ingresa una descripción del requerimiento o problema indicado por el cliente.');
-        return false;
-      }
+    // PASO 5: Fecha y compromiso de entrega
+    if (step === 5) {
       if (!diagnosticData.fecha_estimada_entrega.trim()) {
         setGlobalError('Selecciona la fecha y hora estimada de entrega.');
         return false;
@@ -315,7 +541,7 @@ export default function RecepcionWizardPage() {
 
   const handleNext = () => {
     if (validateStep(currentStep)) {
-      setCurrentStep((prev) => Math.min(prev + 1, 4));
+      setCurrentStep((prev) => Math.min(prev + 1, 5));
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -330,7 +556,7 @@ export default function RecepcionWizardPage() {
   // ENVÍO FINAL MEDIANTE SERVER ACTION
   // -----------------------------------------------------------------------
   const handleSubmitFinal = () => {
-    if (!validateStep(4)) return;
+    if (!validateStep(5)) return;
 
     const evidenciasParaEnviar = AREAS_EVIDENCIA.map((area) => {
       const item = evidences[area];
@@ -369,35 +595,38 @@ export default function RecepcionWizardPage() {
     });
   };
 
-  const handleResetForm = () => {
-    setSuccessResult(null);
-    setCurrentStep(1);
-    setClientData({ rut_dni: '', nombre: '', apellido: '', correo: '', telefono: '' });
-    setVehicleData({ patente: '', marca: '', modelo: '', anio: new Date().getFullYear().toString(), kilometraje: '', color: '' });
-    setDiagnosticData({ tipo_servicio: 'mantencion', descripcion_cliente: '', fecha_estimada_entrega: '' });
-    setEvidences({
-      Frontal: { area: 'Frontal', file: null, previewUrl: null, uploadedUrl: null, isUploading: false, error: null },
-      Capó: { area: 'Capó', file: null, previewUrl: null, uploadedUrl: null, isUploading: false, error: null },
-      'Costado Izquierdo': { area: 'Costado Izquierdo', file: null, previewUrl: null, uploadedUrl: null, isUploading: false, error: null },
-      'Costado Derecho': { area: 'Costado Derecho', file: null, previewUrl: null, uploadedUrl: null, isUploading: false, error: null },
-      Llantas: { area: 'Llantas', file: null, previewUrl: null, uploadedUrl: null, isUploading: false, error: null },
-    });
-    setGlobalError(null);
-  };
-
-  const handlePrint = () => {
-    window.print();
-  };
-
   const totalFotosCargadas = Object.values(evidences).filter((e) => e.uploadedUrl || e.previewUrl).length;
 
-  // Porcentaje de progreso lineal (25%, 50%, 75%, 100%)
-  const progressPercent = (currentStep / 4) * 100;
+  // Porcentaje de progreso lineal (20%, 40%, 60%, 80%, 100%)
+  const progressPercent = (currentStep / 5) * 100;
 
   // =========================================================================
   // RENDER: PANTALLA DE ÉXITO (CONFIRMACIÓN & COMPROBANTE MOBILE-FIRST)
   // =========================================================================
   if (successResult) {
+    const telRaw = successResult.data.cliente.telefono || '';
+    let telClean = telRaw.replace(/\D/g, '');
+    if (telClean.length === 9) {
+      telClean = `56${telClean}`;
+    } else if (telClean.length === 8) {
+      telClean = `569${telClean}`;
+    }
+
+    const nombreCliente = successResult.data.cliente.nombreCompleto || 'Estimado(a) Cliente';
+    const marcaModelo = successResult.data.vehiculo.vehiculoCompleto || 'Vehículo';
+    const patente = successResult.data.vehiculo.patente || '';
+    const numOT = String(successResult.numero_ot).startsWith('OT')
+      ? successResult.numero_ot
+      : `OT #${successResult.numero_ot}`;
+    const ordenId = successResult.orden_id;
+
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    const urlOT = `${baseUrl}/ordenes/${ordenId}`;
+
+    const mensajeWhatsApp = `Hola *${nombreCliente}*, confirmamos el ingreso de tu vehículo *${marcaModelo}* (Patente: *${patente}*) a taller Visú bajo la orden *${numOT}*. Puedes revisar el informe oficial de recepción, diagnóstico inicial y registro fotográfico en el siguiente enlace:\n\n${urlOT}`;
+
+    const whatsappUrl = `https://wa.me/${telClean}?text=${encodeURIComponent(mensajeWhatsApp)}`;
+
     return (
       <div className="w-full max-w-2xl mx-auto py-2 sm:py-6 print:p-0 print:max-w-none">
         <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5 sm:p-8 print:border-none print:shadow-none print:p-0 space-y-6">
@@ -492,26 +721,32 @@ export default function RecepcionWizardPage() {
 
           {/* Botones Móviles Táctiles Full Width */}
           <div className="pt-2 flex flex-col gap-3 print:hidden">
-            <button
-              onClick={handleResetForm}
-              className="w-full min-h-[50px] flex items-center justify-center gap-2 rounded-xl bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white font-bold text-base shadow-sm shadow-orange-200 transition-all active:scale-[0.99]"
+            {/* Botón Principal Destacado: Enviar informe a Cliente por WhatsApp */}
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full bg-[#25D366] hover:bg-[#20ba5a] text-white font-semibold py-4 px-6 rounded-2xl text-base shadow-md transition-all flex items-center justify-center gap-3 active:scale-[0.99] cursor-pointer text-center"
             >
-              <PlusCircle className="w-5 h-5" />
-              <span>Nueva Recepción en Terreno</span>
-            </button>
+              <svg className="w-6 h-6 fill-current shrink-0" viewBox="0 0 24 24">
+                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+              </svg>
+              <span>Enviar informe a Cliente por WhatsApp</span>
+            </a>
 
+            {/* Fila de Botones Secundarios */}
             <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={handlePrint}
-                className="w-full min-h-[46px] flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs sm:text-sm transition-colors shadow-2xs"
+              <Link
+                href={`/ordenes/${successResult.orden_id}`}
+                className="w-full min-h-[46px] flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs sm:text-sm transition-colors shadow-2xs cursor-pointer"
               >
                 <Printer className="w-4 h-4 text-slate-600" />
                 <span>Imprimir</span>
-              </button>
+              </Link>
 
               <Link
                 href="/ordenes"
-                className="w-full min-h-[46px] flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs sm:text-sm transition-colors shadow-2xs"
+                className="w-full min-h-[46px] flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs sm:text-sm transition-colors shadow-2xs cursor-pointer"
               >
                 <span>Ver Tablero</span>
                 <ArrowRight className="w-4 h-4" />
@@ -549,7 +784,7 @@ export default function RecepcionWizardPage() {
           </div>
 
           <span className="text-xs font-bold text-orange-700 bg-orange-50 border border-orange-200/80 px-2.5 py-1 rounded-lg shrink-0">
-            Paso {currentStep} de 4
+            Paso {currentStep} de 5
           </span>
         </div>
 
@@ -561,8 +796,8 @@ export default function RecepcionWizardPage() {
           />
         </div>
 
-        {/* Pastillas de navegación táctil compactas */}
-        <div className="grid grid-cols-4 gap-1.5 text-center">
+        {/* Pastillas de navegación táctil compactas (5 pasos) */}
+        <div className="grid grid-cols-5 gap-1 sm:gap-1.5 text-center">
           {WIZARD_STEPS.map((stepItem) => {
             const isCompleted = currentStep > stepItem.step;
             const isCurrent = currentStep === stepItem.step;
@@ -578,7 +813,7 @@ export default function RecepcionWizardPage() {
                   }
                 }}
                 disabled={stepItem.step > currentStep}
-                className={`py-1 px-1 rounded-lg text-[10px] sm:text-xs font-semibold truncate transition-colors ${
+                className={`py-1 px-0.5 sm:px-1 rounded-lg text-[10px] sm:text-xs font-semibold truncate transition-colors ${
                   isCurrent
                     ? 'bg-orange-600 text-white shadow-2xs'
                     : isCompleted
@@ -615,17 +850,152 @@ export default function RecepcionWizardPage() {
       {/* ------------------------------------------------------------- */}
       <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-2xs">
         {/* ========================================================= */}
-        {/* PASO 1: DATOS DEL CLIENTE                                 */}
+        {/* PASO 1: TIPO DE SERVICIO Y MOTIVO DE INGRESO (NUEVO INICIO) */}
         {/* ========================================================= */}
         {currentStep === 1 && (
           <div className="space-y-4 sm:space-y-5">
             <div className="border-b border-slate-100 pb-3">
               <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
-                <User className="w-4 h-4 text-orange-600" />
-                <span>Identificación y Contacto</span>
+                <Wrench className="w-4 h-4 text-orange-600" />
+                <span>Tipo de Servicio y Motivo de Ingreso</span>
               </h2>
               <p className="text-xs text-slate-600 mt-0.5">
-                Datos del cliente para emitir comprobante y trazabilidad.
+                Especifica la modalidad del trabajo a realizar y el requerimiento reportado por el cliente.
+              </p>
+            </div>
+
+            {/* Selector Visual de Tipo de Servicio */}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                Selecciona el Tipo de Servicio <span className="text-orange-600">*</span>
+              </label>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {OPCIONES_TIPO_SERVICIO.map((opcion) => {
+                  const isSelected = diagnosticData.tipo_servicio === opcion.value;
+                  return (
+                    <div
+                      key={opcion.value}
+                      onClick={() => setDiagnosticData((prev) => ({ ...prev, tipo_servicio: opcion.value }))}
+                      className={`cursor-pointer p-4 rounded-xl border-2 transition-all flex items-start gap-3 active:scale-[0.99] ${
+                        isSelected
+                          ? 'border-orange-600 bg-orange-50/70 ring-2 ring-orange-600/10 shadow-xs'
+                          : 'border-slate-200 bg-white hover:bg-slate-50'
+                      }`}
+                    >
+                      <div
+                        className={`w-5 h-5 rounded-full border-2 mt-0.5 flex items-center justify-center shrink-0 ${
+                          isSelected ? 'border-orange-600 bg-orange-600' : 'border-slate-300 bg-white'
+                        }`}
+                      >
+                        {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white"></div>}
+                      </div>
+
+                      <div>
+                        <p className="font-bold text-sm text-slate-900">{opcion.label}</p>
+                        <p className="text-xs text-slate-600 mt-0.5 leading-snug">
+                          {opcion.description}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Descripción / Motivo de Ingreso */}
+            <div>
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                  Descripción del Requerimiento / Síntomas <span className="text-orange-600">*</span>
+                </label>
+
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  {/* Botón Dictado por Voz (Web Speech API) */}
+                  {speechSupported && (
+                    <button
+                      type="button"
+                      onClick={handleToggleListening}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer shadow-2xs active:scale-[0.98] ${
+                        isListening
+                          ? 'bg-red-50 hover:bg-red-100 active:bg-red-200 text-red-600 border border-red-300 ring-2 ring-red-400/20 font-semibold animate-pulse'
+                          : 'bg-white hover:bg-slate-50 active:bg-slate-100 text-slate-700 border border-slate-200 font-medium'
+                      }`}
+                      title={isListening ? 'Detener dictado por voz' : 'Dictar por voz los síntomas del vehículo'}
+                    >
+                      {isListening ? (
+                        <>
+                          <MicOff className="w-3.5 h-3.5 text-red-600" />
+                          <span>Escuchando...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Mic className="w-3.5 h-3.5 text-slate-600" />
+                          <span>Dictar</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+
+                  {/* Botón Asistente IA */}
+                  <button
+                    type="button"
+                    onClick={handleMejorarConIA}
+                    disabled={!diagnosticData.descripcion_cliente.trim() || isOptimizing || isListening}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-orange-700 bg-orange-50 hover:bg-orange-100 active:bg-orange-200 border border-orange-200 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs active:scale-[0.98]"
+                    title="Estructurar redacción técnica con Inteligencia Artificial"
+                  >
+                    {isOptimizing ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-orange-600" />
+                        <span>Optimizando...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-3.5 h-3.5 text-orange-600" />
+                        <span>✨ Mejorar con IA</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Mensaje sutil de éxito de la IA */}
+              {aiSuccessMessage && (
+                <div className="mb-2 p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs flex items-center gap-2 animate-in fade-in duration-200">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span className="font-medium">{aiSuccessMessage}</span>
+                </div>
+              )}
+
+              <textarea
+                name="descripcion_cliente"
+                value={diagnosticData.descripcion_cliente}
+                onChange={handleDiagnosticChange}
+                rows={4}
+                placeholder="Indica con detalle lo reportado por el cliente o síntomas (puedes escribir o usar el botón Dictar)..."
+                className="w-full px-3.5 py-2.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl"
+                required
+              />
+              <p className="text-[11px] text-slate-600 mt-1">
+                Detalla ruidos, pautas de kilometraje solicitadas o anomalías mencionadas por el conductor.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* PASO 2: DATOS DEL CLIENTE                                 */}
+        {/* ========================================================= */}
+        {currentStep === 2 && (
+          <div className="space-y-4 sm:space-y-5">
+            <div className="border-b border-slate-100 pb-3">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
+                <User className="w-4 h-4 text-orange-600" />
+                <span>Identificación y Contacto del Cliente</span>
+              </h2>
+              <p className="text-xs text-slate-600 mt-0.5">
+                Información para el envío de presupuestos, comprobante y trazabilidad.
               </p>
             </div>
 
@@ -733,9 +1103,9 @@ export default function RecepcionWizardPage() {
         )}
 
         {/* ========================================================= */}
-        {/* PASO 2: DATOS DEL VEHÍCULO                                */}
+        {/* PASO 3: DATOS DEL VEHÍCULO                                */}
         {/* ========================================================= */}
-        {currentStep === 2 && (
+        {currentStep === 3 && (
           <div className="space-y-4 sm:space-y-5">
             <div className="border-b border-slate-100 pb-3">
               <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
@@ -743,7 +1113,7 @@ export default function RecepcionWizardPage() {
                 <span>Ficha Técnica de la Unidad</span>
               </h2>
               <p className="text-xs text-slate-600 mt-0.5">
-                Ingresa la patente y características del vehículo en taller.
+                Ingresa la patente y características del vehículo recibido en taller.
               </p>
             </div>
 
@@ -864,18 +1234,18 @@ export default function RecepcionWizardPage() {
         )}
 
         {/* ========================================================= */}
-        {/* PASO 3: EVIDENCIAS FOTOGRÁFICAS INICIALES (MOBILE CAMERA) */}
+        {/* PASO 4: EVIDENCIAS FOTOGRÁFICAS INICIALES (MOBILE CAMERA) */}
         {/* ========================================================= */}
-        {currentStep === 3 && (
+        {currentStep === 4 && (
           <div className="space-y-4 sm:space-y-5">
             <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
               <div>
                 <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
                   <Camera className="w-4 h-4 text-orange-600" />
-                  <span>Evidencias Fotográficas</span>
+                  <span>Evidencias Fotográficas Iniciales</span>
                 </h2>
                 <p className="text-xs text-slate-600 mt-0.5">
-                  Toma fotos en terreno para respaldar el estado de ingreso.
+                  Toma fotos en terreno para respaldar el estado exterior y detalles de ingreso.
                 </p>
               </div>
 
@@ -1028,80 +1398,25 @@ export default function RecepcionWizardPage() {
         )}
 
         {/* ========================================================= */}
-        {/* PASO 4: DIAGNÓSTICO Y PLAZOS                               */}
+        {/* PASO 5: FECHA Y COMPROMISO DE ENTREGA (PASO FINAL)        */}
         {/* ========================================================= */}
-        {currentStep === 4 && (
+        {currentStep === 5 && (
           <div className="space-y-4 sm:space-y-5">
             <div className="border-b border-slate-100 pb-3">
               <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
-                <ClipboardCheck className="w-4 h-4 text-orange-600" />
-                <span>Diagnóstico y Compromiso</span>
+                <Calendar className="w-4 h-4 text-orange-600" />
+                <span>Compromiso y Fecha Estimada de Entrega</span>
               </h2>
               <p className="text-xs text-slate-600 mt-0.5">
-                Especifica los requerimientos y la fecha estimada de entrega.
+                Define los plazos acordados con el cliente y confirma los antecedentes para generar la OT.
               </p>
             </div>
 
-            {/* Tipo de Servicio */}
+            {/* Selector de Fecha y Hora Estimada de Entrega */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-                Tipo de Servicio <span className="text-orange-600">*</span>
-              </label>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {OPCIONES_TIPO_SERVICIO.map((opcion) => {
-                  const isSelected = diagnosticData.tipo_servicio === opcion.value;
-                  return (
-                    <div
-                      key={opcion.value}
-                      onClick={() => setDiagnosticData((prev) => ({ ...prev, tipo_servicio: opcion.value }))}
-                      className={`cursor-pointer p-3.5 rounded-xl border-2 transition-all flex items-start gap-3 active:scale-[0.99] ${
-                        isSelected
-                          ? 'border-orange-600 bg-orange-50/60 ring-2 ring-orange-600/10 shadow-xs'
-                          : 'border-slate-200 bg-white hover:bg-slate-50'
-                      }`}
-                    >
-                      <div
-                        className={`w-5 h-5 rounded-full border-2 mt-0.5 flex items-center justify-center shrink-0 ${
-                          isSelected ? 'border-orange-600 bg-orange-600' : 'border-slate-300 bg-white'
-                        }`}
-                      >
-                        {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white"></div>}
-                      </div>
-
-                      <div>
-                        <p className="font-bold text-sm text-slate-900">{opcion.label}</p>
-                        <p className="text-[11px] text-slate-600 mt-0.5">
-                          {opcion.description}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Descripción Detallada */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                Descripción del Requerimiento <span className="text-orange-600">*</span>
-              </label>
-              <textarea
-                name="descripcion_cliente"
-                value={diagnosticData.descripcion_cliente}
-                onChange={handleDiagnosticChange}
-                rows={3}
-                placeholder="Indica con detalle lo reportado por el cliente o síntomas..."
-                className="w-full px-3.5 py-2.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl"
-                required
-              />
-            </div>
-
-            {/* Fecha Estimada de Entrega */}
-            <div>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1.5">
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                  Fecha y Hora de Entrega <span className="text-orange-600">*</span>
+                  Fecha y Hora Estimada de Entrega <span className="text-orange-600">*</span>
                 </label>
                 {/* Atajos Rápidos */}
                 <div className="flex items-center gap-1.5 text-xs">
@@ -1109,21 +1424,21 @@ export default function RecepcionWizardPage() {
                   <button
                     type="button"
                     onClick={() => setQuickDelivery(4)}
-                    className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-orange-100 active:bg-orange-200 text-slate-700 font-semibold text-[11px]"
+                    className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-orange-100 active:bg-orange-200 text-slate-700 font-semibold text-[11px] transition-colors"
                   >
                     +4h
                   </button>
                   <button
                     type="button"
                     onClick={() => setQuickDelivery(24)}
-                    className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-orange-100 active:bg-orange-200 text-slate-700 font-semibold text-[11px]"
+                    className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-orange-100 active:bg-orange-200 text-slate-700 font-semibold text-[11px] transition-colors"
                   >
                     Mañana
                   </button>
                   <button
                     type="button"
                     onClick={() => setQuickDelivery(48)}
-                    className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-orange-100 active:bg-orange-200 text-slate-700 font-semibold text-[11px]"
+                    className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-orange-100 active:bg-orange-200 text-slate-700 font-semibold text-[11px] transition-colors"
                   >
                     48h
                   </button>
@@ -1143,19 +1458,46 @@ export default function RecepcionWizardPage() {
               </div>
             </div>
 
-            {/* Resumen Compacto */}
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1">
-              <div className="flex justify-between">
-                <span className="text-slate-600">Cliente / RUT:</span>
-                <span className="font-semibold text-slate-800">{clientData.nombre} {clientData.apellido} ({clientData.rut_dni})</span>
+            {/* Resumen Compacto de Confirmación Previo al Envío */}
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-2.5">
+              <div className="flex items-center gap-1.5 font-bold text-slate-800 text-xs uppercase tracking-wider pb-1.5 border-b border-slate-200/70">
+                <ClipboardList className="w-3.5 h-3.5 text-orange-600" />
+                <span>Resumen de la Orden a Registrar</span>
               </div>
-              <div className="flex justify-between">
+
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600">Servicio Seleccionado:</span>
+                <span className="font-bold text-orange-700 bg-orange-100/70 px-2 py-0.5 rounded text-[11px]">
+                  {TIPO_SERVICIO_LABELS[diagnosticData.tipo_servicio]}
+                </span>
+              </div>
+
+              <div className="flex justify-between items-start gap-2">
+                <span className="text-slate-600 shrink-0">Motivo / Síntoma:</span>
+                <span className="font-medium text-slate-800 text-right line-clamp-2">
+                  {diagnosticData.descripcion_cliente || '(Sin descripción)'}
+                </span>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600">Cliente / Contacto:</span>
+                <span className="font-semibold text-slate-800">
+                  {clientData.nombre} {clientData.apellido} ({clientData.rut_dni}) • {clientData.telefono}
+                </span>
+              </div>
+
+              <div className="flex justify-between items-center">
                 <span className="text-slate-600">Vehículo:</span>
-                <span className="font-semibold text-slate-800">{vehicleData.patente} • {vehicleData.marca} {vehicleData.modelo}</span>
+                <span className="font-semibold text-slate-800">
+                  {vehicleData.patente} • {vehicleData.marca} {vehicleData.modelo} ({vehicleData.color})
+                </span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-600">Fotos:</span>
-                <span className="font-semibold text-slate-800">{totalFotosCargadas} evidencias adjuntas</span>
+
+              <div className="flex justify-between items-center pt-1 border-t border-slate-200/70">
+                <span className="text-slate-600">Evidencias Adjuntas:</span>
+                <span className="font-semibold text-slate-800">
+                  📸 {totalFotosCargadas} de 5 fotografías guardadas
+                </span>
               </div>
             </div>
           </div>
@@ -1181,13 +1523,13 @@ export default function RecepcionWizardPage() {
           )}
 
           {/* Botón Siguiente o Guardar (Ancho completo en móvil para fácil pulsación) */}
-          {currentStep < 4 ? (
+          {currentStep < 5 ? (
             <button
               type="button"
               onClick={handleNext}
               className="w-full sm:w-auto min-h-[50px] flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white font-bold text-base transition-all shadow-sm shadow-orange-200 active:scale-[0.99]"
             >
-              <span>Continuar a {WIZARD_STEPS[currentStep].short}</span>
+              <span>Continuar a {WIZARD_STEPS[currentStep].title}</span>
               <ChevronRight className="w-4 h-4" />
             </button>
           ) : (
@@ -1195,7 +1537,7 @@ export default function RecepcionWizardPage() {
               type="button"
               onClick={handleSubmitFinal}
               disabled={isPending}
-              className="w-full sm:w-auto min-h-[52px] flex items-center justify-center gap-2 px-10 py-3.5 rounded-xl bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white font-extrabold text-base transition-all shadow-md shadow-orange-200 active:scale-[0.99] disabled:opacity-60"
+              className="w-full sm:w-auto min-h-[52px] flex items-center justify-center gap-2 px-10 py-3 rounded-xl bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white font-medium text-base transition-all shadow-md shadow-orange-200 active:scale-[0.99] disabled:opacity-60"
             >
               {isPending ? (
                 <>
