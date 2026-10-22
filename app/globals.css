@@ -1,10 +1,19 @@
 @import "tailwindcss";
+@config "../tailwind.config.js";
 
 @theme {
-  --color-brand-50: #fff7ed;
-  --color-brand-500: #f97316;
-  --color-brand-600: #ea580c;
-  --color-brand-700: #c2410c;
+  --color-visu-blue: #0025A8;
+  --color-visu-blue-hover: #001E87;
+  --color-visu-blue-dark: #00196B;
+  --color-visu-blue-light: #1A3FCE;
+
+  --color-visu-mint: #51DCAE;
+  --color-visu-mint-hover: #3EC99B;
+  --color-visu-mint-dark: #2FB588;
+  --color-visu-mint-light: #76E6C3;
+  --color-visu-mint-50: #F0FDF8;
+  --color-visu-mint-100: #D2F6EA;
+  --color-visu-mint-200: #A7F0D6;
 }
 
 :root {
@@ -58,8 +67,8 @@ textarea {
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: #ea580c;
-  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15);
+  border-color: #51DCAE;
+  box-shadow: 0 0 0 3px rgba(81, 220, 174, 0.25);
 }
 
 /* ========================================================================= */

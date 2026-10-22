@@ -248,7 +248,7 @@ export default function TableroOrdenesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
-            <Kanban className="w-6 h-6 text-orange-600" />
+            <Kanban className="w-6 h-6 text-visu-blue" />
             <span>Tablero de Órdenes de Trabajo</span>
           </h1>
           <p className="text-sm text-slate-600 mt-0.5">
@@ -268,9 +268,9 @@ export default function TableroOrdenesPage() {
 
           <Link
             href="/recepcion"
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-semibold text-sm transition-all shadow-sm shadow-orange-200"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-visu-mint hover:bg-visu-mint/90 active:bg-visu-mint-dark text-slate-950 font-bold text-sm transition-all shadow-md shadow-visu-mint/20 cursor-pointer"
           >
-            <ClipboardPlus className="w-4 h-4" />
+            <ClipboardPlus className="w-4 h-4 text-slate-950" />
             <span>Nueva Recepción</span>
           </Link>
         </div>
@@ -285,7 +285,7 @@ export default function TableroOrdenesPage() {
             placeholder="Buscar por OT, Patente o Cliente..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
+            className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-visu-mint/40 focus:border-visu-mint"
           />
         </div>
 
@@ -335,11 +335,11 @@ export default function TableroOrdenesPage() {
                       <Link
                         key={ot.id}
                         href={`/ordenes/${ot.id}`}
-                        className="group block bg-white border border-slate-200 hover:border-orange-300 rounded-xl p-3 shadow-2xs hover:shadow-md transition-all duration-200 space-y-2.5 active:scale-[0.99] cursor-pointer"
+                        className="group block bg-white border border-slate-200 hover:border-visu-mint rounded-xl p-3 shadow-2xs hover:shadow-md transition-all duration-200 space-y-2.5 active:scale-[0.99] cursor-pointer"
                       >
                         {/* Cabecera Tarjeta: Folio OT y Badge de Estado */}
                         <div className="flex items-center justify-between">
-                          <span className="font-black text-xs text-slate-900 group-hover:text-orange-600 transition-colors">
+                          <span className="font-black text-xs text-slate-900 group-hover:text-visu-blue transition-colors">
                             {ot.numero_ot !== undefined && ot.numero_ot !== null
                               ? (String(ot.numero_ot).startsWith('OT') ? ot.numero_ot : `OT #${ot.numero_ot}`)
                               : `OT #${ot.id}`}
@@ -395,7 +395,7 @@ export default function TableroOrdenesPage() {
                                 type="button"
                                 disabled={isUpdatingThis}
                                 onClick={(e) => handleCambiarEstadoDirecto(e, ot.id, 'listo')}
-                                className="w-full py-1.5 px-2.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
+                                className="w-full py-1.5 px-2.5 rounded-lg bg-visu-mint hover:bg-visu-mint/90 active:bg-visu-mint-dark text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
                                 title="Marcar trabajo completado y listo para entrega"
                               >
                                 <Flag className="w-3.5 h-3.5" />
@@ -429,11 +429,11 @@ export default function TableroOrdenesPage() {
                         <div className="flex items-center justify-between pt-1.5 border-t border-slate-100 text-[10px]">
                           {ot.fecha_estimada_entrega ? (
                             <div className="flex items-center gap-1 text-slate-600">
-                              <Calendar className="w-3 h-3 text-orange-600" />
+                              <Calendar className="w-3 h-3 text-visu-blue" />
                               <span>
                                 {new Date(ot.fecha_estimada_entrega).toLocaleDateString('es-CL', {
-                                  day: '2-digit',
-                                  month: 'short',
+                                   day: '2-digit',
+                                   month: 'short',
                                 })}
                               </span>
                             </div>
@@ -441,9 +441,9 @@ export default function TableroOrdenesPage() {
                             <span className="text-slate-400">Sin fecha</span>
                           )}
 
-                          <span className="inline-flex items-center gap-0.5 font-bold text-orange-600 group-hover:translate-x-0.5 transition-transform">
+                          <span className="inline-flex items-center gap-0.5 font-bold text-visu-blue group-hover:translate-x-0.5 transition-transform">
                             <span>Ver Detalle</span>
-                            <ArrowRight className="w-3 h-3" />
+                            <ArrowRight className="w-3 h-3 text-visu-mint" />
                           </span>
                         </div>
                       </Link>

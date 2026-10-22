@@ -636,7 +636,7 @@ export default function RecepcionWizardPage() {
               <CheckCircle2 className="w-8 h-8 stroke-[2.5]" />
             </div>
 
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-orange-50 text-orange-700 border border-orange-200 mb-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-visu-mint/20 text-visu-blue border border-visu-mint/40 mb-2">
               <Sparkles className="w-3.5 h-3.5" />
               Ingreso Registrado con Éxito
             </span>
@@ -656,7 +656,7 @@ export default function RecepcionWizardPage() {
             <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-4 space-y-3">
               <div className="flex items-center justify-between pb-2 border-b border-slate-200/60">
                 <div className="flex items-center gap-2">
-                  <User className="w-4 h-4 text-orange-600" />
+                  <User className="w-4 h-4 text-visu-blue" />
                   <span className="font-bold text-xs uppercase tracking-wider text-slate-700">Cliente</span>
                 </div>
                 <span className="font-bold text-sm text-slate-900">{successResult.data.cliente.nombreCompleto}</span>
@@ -677,7 +677,7 @@ export default function RecepcionWizardPage() {
             <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-4 space-y-3">
               <div className="flex items-center justify-between pb-2 border-b border-slate-200/60">
                 <div className="flex items-center gap-2">
-                  <Car className="w-4 h-4 text-orange-600" />
+                  <Car className="w-4 h-4 text-visu-blue" />
                   <span className="font-bold text-xs uppercase tracking-wider text-slate-700">Vehículo</span>
                 </div>
                 <span className="font-extrabold text-xs bg-slate-900 text-white px-2.5 py-0.5 rounded tracking-wider">
@@ -700,7 +700,7 @@ export default function RecepcionWizardPage() {
             <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-4 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="font-bold text-xs uppercase tracking-wider text-slate-700">Servicio</span>
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-orange-100 text-orange-800">
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-visu-mint/25 text-slate-900 border border-visu-mint/40">
                   {TIPO_SERVICIO_LABELS[successResult.data.orden.tipo_servicio] || successResult.data.orden.tipo_servicio}
                 </span>
               </div>
@@ -711,7 +711,7 @@ export default function RecepcionWizardPage() {
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pt-2 border-t border-slate-200/60 text-xs">
                 <div className="flex items-center gap-1.5 text-slate-700">
-                  <Calendar className="w-3.5 h-3.5 text-orange-600" />
+                  <Calendar className="w-3.5 h-3.5 text-visu-blue" />
                   <span>Entrega Estimada: <strong>{new Date(successResult.data.orden.fecha_estimada_entrega).toLocaleString('es-CL', { dateStyle: 'medium', timeStyle: 'short' })}</strong></span>
                 </div>
                 <span className="text-slate-600 font-medium">📸 {successResult.data.totalEvidencias} evidencias guardadas</span>
@@ -770,7 +770,7 @@ export default function RecepcionWizardPage() {
         {/* Título & Badge de Paso */}
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-orange-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-visu-blue text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
               {currentStep}
             </div>
             <div>
@@ -783,7 +783,7 @@ export default function RecepcionWizardPage() {
             </div>
           </div>
 
-          <span className="text-xs font-bold text-orange-700 bg-orange-50 border border-orange-200/80 px-2.5 py-1 rounded-lg shrink-0">
+          <span className="text-xs font-bold text-visu-blue bg-visu-mint/20 border border-visu-mint/40 px-2.5 py-1 rounded-lg shrink-0">
             Paso {currentStep} de 5
           </span>
         </div>
@@ -791,7 +791,7 @@ export default function RecepcionWizardPage() {
         {/* Barra de progreso lineal */}
         <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden mb-3">
           <div
-            className="bg-orange-600 h-full rounded-full transition-all duration-300 ease-out"
+            className="bg-visu-mint h-full rounded-full transition-all duration-300 ease-out"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
@@ -815,9 +815,9 @@ export default function RecepcionWizardPage() {
                 disabled={stepItem.step > currentStep}
                 className={`py-1 px-0.5 sm:px-1 rounded-lg text-[10px] sm:text-xs font-semibold truncate transition-colors ${
                   isCurrent
-                    ? 'bg-orange-600 text-white shadow-2xs'
+                    ? 'bg-visu-blue text-white shadow-2xs'
                     : isCompleted
-                    ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                    ? 'bg-visu-mint/20 text-visu-blue font-bold hover:bg-visu-mint/30'
                     : 'text-slate-600 opacity-60 cursor-not-allowed'
                 }`}
               >
@@ -856,7 +856,7 @@ export default function RecepcionWizardPage() {
           <div className="space-y-4 sm:space-y-5">
             <div className="border-b border-slate-100 pb-3">
               <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
-                <Wrench className="w-4 h-4 text-orange-600" />
+                <Wrench className="w-4 h-4 text-visu-blue" />
                 <span>Tipo de Servicio y Motivo de Ingreso</span>
               </h2>
               <p className="text-xs text-slate-600 mt-0.5">
@@ -867,7 +867,7 @@ export default function RecepcionWizardPage() {
             {/* Selector Visual de Tipo de Servicio */}
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-                Selecciona el Tipo de Servicio <span className="text-orange-600">*</span>
+                Selecciona el Tipo de Servicio <span className="text-visu-blue font-bold">*</span>
               </label>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -879,16 +879,16 @@ export default function RecepcionWizardPage() {
                       onClick={() => setDiagnosticData((prev) => ({ ...prev, tipo_servicio: opcion.value }))}
                       className={`cursor-pointer p-4 rounded-xl border-2 transition-all flex items-start gap-3 active:scale-[0.99] ${
                         isSelected
-                          ? 'border-orange-600 bg-orange-50/70 ring-2 ring-orange-600/10 shadow-xs'
+                          ? 'border-visu-mint bg-visu-mint/10 ring-2 ring-visu-mint/20 shadow-xs'
                           : 'border-slate-200 bg-white hover:bg-slate-50'
                       }`}
                     >
                       <div
                         className={`w-5 h-5 rounded-full border-2 mt-0.5 flex items-center justify-center shrink-0 ${
-                          isSelected ? 'border-orange-600 bg-orange-600' : 'border-slate-300 bg-white'
+                          isSelected ? 'border-visu-mint bg-visu-mint' : 'border-slate-300 bg-white'
                         }`}
                       >
-                        {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white"></div>}
+                        {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-slate-950"></div>}
                       </div>
 
                       <div>
@@ -907,7 +907,7 @@ export default function RecepcionWizardPage() {
             <div>
               <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                  Descripción del Requerimiento / Síntomas <span className="text-orange-600">*</span>
+                  Descripción del Requerimiento / Síntomas <span className="text-visu-blue font-bold">*</span>
                 </label>
 
                 <div className="flex items-center gap-1.5 sm:gap-2">
@@ -942,17 +942,17 @@ export default function RecepcionWizardPage() {
                     type="button"
                     onClick={handleMejorarConIA}
                     disabled={!diagnosticData.descripcion_cliente.trim() || isOptimizing || isListening}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-orange-700 bg-orange-50 hover:bg-orange-100 active:bg-orange-200 border border-orange-200 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs active:scale-[0.98]"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-visu-blue bg-visu-mint/20 hover:bg-visu-mint/30 active:bg-visu-mint/40 border border-visu-mint/40 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs active:scale-[0.98]"
                     title="Estructurar redacción técnica con Inteligencia Artificial"
                   >
                     {isOptimizing ? (
                       <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin text-orange-600" />
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-visu-blue" />
                         <span>Optimizando...</span>
                       </>
                     ) : (
                       <>
-                        <Sparkles className="w-3.5 h-3.5 text-orange-600" />
+                        <Sparkles className="w-3.5 h-3.5 text-visu-blue" />
                         <span>✨ Mejorar con IA</span>
                       </>
                     )}
@@ -991,7 +991,7 @@ export default function RecepcionWizardPage() {
           <div className="space-y-4 sm:space-y-5">
             <div className="border-b border-slate-100 pb-3">
               <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
-                <User className="w-4 h-4 text-orange-600" />
+                <User className="w-4 h-4 text-visu-blue" />
                 <span>Identificación y Contacto del Cliente</span>
               </h2>
               <p className="text-xs text-slate-600 mt-0.5">
@@ -1003,7 +1003,7 @@ export default function RecepcionWizardPage() {
               {/* RUT / DNI */}
               <div className="sm:col-span-2">
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                  RUT / DNI <span className="text-orange-600">*</span>
+                  RUT / DNI <span className="text-visu-blue font-bold">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -1024,7 +1024,7 @@ export default function RecepcionWizardPage() {
               {/* Nombre */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                  Nombre <span className="text-orange-600">*</span>
+                  Nombre <span className="text-visu-blue font-bold">*</span>
                 </label>
                 <input
                   type="text"
@@ -1041,7 +1041,7 @@ export default function RecepcionWizardPage() {
               {/* Apellido */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                  Apellido <span className="text-orange-600">*</span>
+                  Apellido <span className="text-visu-blue font-bold">*</span>
                 </label>
                 <input
                   type="text"
@@ -1058,7 +1058,7 @@ export default function RecepcionWizardPage() {
               {/* Teléfono / WhatsApp */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                  Teléfono / Celular <span className="text-orange-600">*</span>
+                  Teléfono / Celular <span className="text-visu-blue font-bold">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -1079,7 +1079,7 @@ export default function RecepcionWizardPage() {
               {/* Correo Electrónico */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                  Correo Electrónico <span className="text-orange-600">*</span>
+                  Correo Electrónico <span className="text-visu-blue font-bold">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -1109,7 +1109,7 @@ export default function RecepcionWizardPage() {
           <div className="space-y-4 sm:space-y-5">
             <div className="border-b border-slate-100 pb-3">
               <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
-                <Car className="w-4 h-4 text-orange-600" />
+                <Car className="w-4 h-4 text-visu-blue" />
                 <span>Ficha Técnica de la Unidad</span>
               </h2>
               <p className="text-xs text-slate-600 mt-0.5">
@@ -1121,7 +1121,7 @@ export default function RecepcionWizardPage() {
               {/* Patente / Matrícula */}
               <div className="sm:col-span-2 lg:col-span-1">
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                  Patente / Matrícula <span className="text-orange-600">*</span>
+                  Patente / Matrícula <span className="text-visu-blue font-bold">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -1143,7 +1143,7 @@ export default function RecepcionWizardPage() {
               {/* Marca */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                  Marca <span className="text-orange-600">*</span>
+                  Marca <span className="text-visu-blue font-bold">*</span>
                 </label>
                 <input
                   type="text"
@@ -1159,7 +1159,7 @@ export default function RecepcionWizardPage() {
               {/* Modelo */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                  Modelo <span className="text-orange-600">*</span>
+                  Modelo <span className="text-visu-blue font-bold">*</span>
                 </label>
                 <input
                   type="text"
@@ -1175,7 +1175,7 @@ export default function RecepcionWizardPage() {
               {/* Kilometraje */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                  Kilometraje <span className="text-orange-600">*</span>
+                  Kilometraje <span className="text-visu-blue font-bold">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -1196,7 +1196,7 @@ export default function RecepcionWizardPage() {
               {/* Año */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                  Año <span className="text-orange-600">*</span>
+                  Año <span className="text-visu-blue font-bold">*</span>
                 </label>
                 <input
                   type="number"
@@ -1214,7 +1214,7 @@ export default function RecepcionWizardPage() {
               {/* Color */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                  Color <span className="text-orange-600">*</span>
+                  Color <span className="text-visu-blue font-bold">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -1241,7 +1241,7 @@ export default function RecepcionWizardPage() {
             <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
               <div>
                 <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
-                  <Camera className="w-4 h-4 text-orange-600" />
+                  <Camera className="w-4 h-4 text-visu-blue" />
                   <span>Evidencias Fotográficas Iniciales</span>
                 </h2>
                 <p className="text-xs text-slate-600 mt-0.5">
@@ -1249,7 +1249,7 @@ export default function RecepcionWizardPage() {
                 </p>
               </div>
 
-              <span className="text-xs font-bold bg-slate-100 px-2.5 py-1 rounded-full text-slate-700 shrink-0">
+              <span className="text-xs font-bold bg-visu-mint/20 text-visu-blue px-2.5 py-1 rounded-full border border-visu-mint/40 shrink-0">
                 {totalFotosCargadas}/5
               </span>
             </div>
@@ -1265,15 +1265,15 @@ export default function RecepcionWizardPage() {
                     key={area}
                     className={`rounded-2xl border-2 transition-all p-3.5 flex flex-col justify-between ${
                       hasPhoto
-                        ? 'border-emerald-500/80 bg-emerald-50/20'
-                        : 'border-dashed border-slate-300 hover:border-orange-500 bg-slate-50/60'
+                        ? 'border-visu-mint bg-visu-mint/5 shadow-xs'
+                        : 'border-dashed border-2 border-visu-mint/60 hover:border-visu-mint bg-visu-mint/5 hover:bg-visu-mint/10'
                     }`}
                   >
                     {/* Header de la Tarjeta */}
                     <div className="flex items-center justify-between mb-2.5">
                       <span className="font-bold text-sm text-slate-900 flex items-center gap-2">
                         {hasPhoto ? (
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                          <CheckCircle2 className="w-4 h-4 text-visu-blue" />
                         ) : (
                           <Camera className="w-4 h-4 text-slate-600" />
                         )}
@@ -1281,7 +1281,7 @@ export default function RecepcionWizardPage() {
                       </span>
 
                       {hasPhoto && (
-                        <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
+                        <span className="text-[10px] font-bold bg-visu-mint text-slate-950 px-2 py-0.5 rounded-full shadow-2xs">
                           Cargada
                         </span>
                       )}
@@ -1344,7 +1344,7 @@ export default function RecepcionWizardPage() {
                           <button
                             type="button"
                             onClick={() => cameraInputRefs.current[area]?.click()}
-                            className="w-11 h-11 rounded-xl bg-white text-orange-600 shadow-md flex items-center justify-center active:scale-95 transition-transform"
+                            className="w-11 h-11 rounded-xl bg-white text-visu-blue shadow-md flex items-center justify-center active:scale-95 transition-transform hover:text-visu-mint-dark"
                             title="Tomar otra foto"
                           >
                             <Camera className="w-5 h-5" />
@@ -1362,7 +1362,7 @@ export default function RecepcionWizardPage() {
 
                         {evidenceState.isUploading && (
                           <div className="absolute inset-0 bg-slate-900/80 flex items-center justify-center gap-2 text-white text-xs font-semibold">
-                            <Loader2 className="w-4 h-4 animate-spin text-orange-500" />
+                            <Loader2 className="w-4 h-4 animate-spin text-visu-mint" />
                             <span>Guardando en nube...</span>
                           </div>
                         )}
@@ -1373,9 +1373,9 @@ export default function RecepcionWizardPage() {
                         <button
                           type="button"
                           onClick={() => cameraInputRefs.current[area]?.click()}
-                          className="min-h-[50px] w-full rounded-xl bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs active:scale-[0.98] transition-all"
+                          className="min-h-[50px] w-full rounded-xl bg-visu-mint hover:bg-visu-mint/90 active:bg-visu-mint-dark text-slate-950 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs active:scale-[0.98] transition-all cursor-pointer"
                         >
-                          <Camera className="w-4 h-4" />
+                          <Camera className="w-4 h-4 text-slate-950" />
                           <span>Tomar Foto con Cámara</span>
                         </button>
 
@@ -1383,7 +1383,7 @@ export default function RecepcionWizardPage() {
                         <button
                           type="button"
                           onClick={() => galleryInputRefs.current[area]?.click()}
-                          className="min-h-[40px] w-full rounded-xl border border-slate-300 bg-white hover:bg-slate-50 active:bg-slate-100 text-slate-700 font-medium text-xs flex items-center justify-center gap-1.5 transition-colors"
+                          className="min-h-[40px] w-full rounded-xl border border-slate-300 bg-white hover:bg-visu-mint/10 active:bg-visu-mint/20 text-slate-700 font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                         >
                           <ImageIcon className="w-3.5 h-3.5 text-slate-600" />
                           <span>O seleccionar de Galería</span>
@@ -1404,7 +1404,7 @@ export default function RecepcionWizardPage() {
           <div className="space-y-4 sm:space-y-5">
             <div className="border-b border-slate-100 pb-3">
               <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-orange-600" />
+                <Calendar className="w-4 h-4 text-visu-blue" />
                 <span>Compromiso y Fecha Estimada de Entrega</span>
               </h2>
               <p className="text-xs text-slate-600 mt-0.5">
@@ -1416,7 +1416,7 @@ export default function RecepcionWizardPage() {
             <div>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1.5">
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                  Fecha y Hora Estimada de Entrega <span className="text-orange-600">*</span>
+                  Fecha y Hora Estimada de Entrega <span className="text-visu-blue font-bold">*</span>
                 </label>
                 {/* Atajos Rápidos */}
                 <div className="flex items-center gap-1.5 text-xs">
@@ -1424,21 +1424,21 @@ export default function RecepcionWizardPage() {
                   <button
                     type="button"
                     onClick={() => setQuickDelivery(4)}
-                    className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-orange-100 active:bg-orange-200 text-slate-700 font-semibold text-[11px] transition-colors"
+                    className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-visu-mint/20 active:bg-visu-mint/30 text-slate-700 hover:text-visu-blue font-semibold text-[11px] transition-colors cursor-pointer"
                   >
                     +4h
                   </button>
                   <button
                     type="button"
                     onClick={() => setQuickDelivery(24)}
-                    className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-orange-100 active:bg-orange-200 text-slate-700 font-semibold text-[11px] transition-colors"
+                    className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-visu-mint/20 active:bg-visu-mint/30 text-slate-700 hover:text-visu-blue font-semibold text-[11px] transition-colors cursor-pointer"
                   >
                     Mañana
                   </button>
                   <button
                     type="button"
                     onClick={() => setQuickDelivery(48)}
-                    className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-orange-100 active:bg-orange-200 text-slate-700 font-semibold text-[11px] transition-colors"
+                    className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-visu-mint/20 active:bg-visu-mint/30 text-slate-700 hover:text-visu-blue font-semibold text-[11px] transition-colors cursor-pointer"
                   >
                     48h
                   </button>
@@ -1461,13 +1461,13 @@ export default function RecepcionWizardPage() {
             {/* Resumen Compacto de Confirmación Previo al Envío */}
             <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-2.5">
               <div className="flex items-center gap-1.5 font-bold text-slate-800 text-xs uppercase tracking-wider pb-1.5 border-b border-slate-200/70">
-                <ClipboardList className="w-3.5 h-3.5 text-orange-600" />
+                <ClipboardList className="w-3.5 h-3.5 text-visu-blue" />
                 <span>Resumen de la Orden a Registrar</span>
               </div>
 
               <div className="flex justify-between items-center">
                 <span className="text-slate-600">Servicio Seleccionado:</span>
-                <span className="font-bold text-orange-700 bg-orange-100/70 px-2 py-0.5 rounded text-[11px]">
+                <span className="font-bold text-visu-blue bg-visu-mint/20 border border-visu-mint/40 px-2 py-0.5 rounded text-[11px]">
                   {TIPO_SERVICIO_LABELS[diagnosticData.tipo_servicio]}
                 </span>
               </div>
@@ -1495,7 +1495,7 @@ export default function RecepcionWizardPage() {
 
               <div className="flex justify-between items-center pt-1 border-t border-slate-200/70">
                 <span className="text-slate-600">Evidencias Adjuntas:</span>
-                <span className="font-semibold text-slate-800">
+                <span className="font-bold text-visu-blue bg-visu-mint/20 px-2 py-0.5 rounded text-[11px]">
                   📸 {totalFotosCargadas} de 5 fotografías guardadas
                 </span>
               </div>
@@ -1513,7 +1513,7 @@ export default function RecepcionWizardPage() {
               type="button"
               onClick={handlePrev}
               disabled={isPending}
-              className="w-full sm:w-auto min-h-[48px] flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 active:bg-slate-100 text-slate-700 font-semibold text-sm transition-colors shadow-2xs"
+              className="w-full sm:w-auto min-h-[48px] flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 active:bg-slate-100 text-slate-700 font-semibold text-sm transition-colors shadow-2xs cursor-pointer"
             >
               <ChevronLeft className="w-4 h-4" />
               <span>Paso Anterior</span>
@@ -1527,7 +1527,7 @@ export default function RecepcionWizardPage() {
             <button
               type="button"
               onClick={handleNext}
-              className="w-full sm:w-auto min-h-[50px] flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white font-bold text-base transition-all shadow-sm shadow-orange-200 active:scale-[0.99]"
+              className="w-full sm:w-auto min-h-[50px] flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-visu-mint hover:bg-visu-mint/90 active:bg-visu-mint-dark text-slate-950 font-bold text-base transition-all shadow-md shadow-visu-mint/20 active:scale-[0.99] cursor-pointer"
             >
               <span>Continuar a {WIZARD_STEPS[currentStep].title}</span>
               <ChevronRight className="w-4 h-4" />
@@ -1537,16 +1537,16 @@ export default function RecepcionWizardPage() {
               type="button"
               onClick={handleSubmitFinal}
               disabled={isPending}
-              className="w-full sm:w-auto min-h-[52px] flex items-center justify-center gap-2 px-10 py-3 rounded-xl bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white font-medium text-base transition-all shadow-md shadow-orange-200 active:scale-[0.99] disabled:opacity-60"
+              className="w-full sm:w-auto min-h-[52px] flex items-center justify-center gap-2 px-10 py-3 rounded-xl bg-visu-mint hover:bg-visu-mint/90 active:bg-visu-mint-dark text-slate-950 font-bold text-base transition-all shadow-md shadow-visu-mint/30 active:scale-[0.99] disabled:opacity-60 cursor-pointer"
             >
               {isPending ? (
                 <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Loader2 className="w-5 h-5 animate-spin text-slate-950" />
                   <span>Generando Orden de Trabajo...</span>
                 </>
               ) : (
                 <>
-                  <CheckCircle2 className="w-5 h-5" />
+                  <CheckCircle2 className="w-5 h-5 text-slate-950" />
                   <span>Finalizar y Generar OT</span>
                 </>
               )}

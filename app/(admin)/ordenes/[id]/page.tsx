@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback, use } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import {
@@ -610,9 +611,9 @@ export default function DetalleOrdenPage(props: PageProps) {
             <button
               type="button"
               onClick={handleIniciarHallazgos}
-              className="bg-orange-600 hover:bg-orange-700 active:scale-98 text-white font-semibold px-4 py-2.5 rounded-xl text-xs sm:text-sm inline-flex items-center gap-2 transition-all shadow-sm shadow-orange-200 cursor-pointer print:hidden"
+              className="bg-visu-mint hover:bg-visu-mint/90 active:bg-visu-mint-dark text-slate-950 font-bold px-4 py-2.5 rounded-xl text-xs sm:text-sm inline-flex items-center gap-2 transition-all shadow-md shadow-visu-mint/20 cursor-pointer print:hidden"
             >
-              <Wrench className="w-4 h-4" />
+              <Wrench className="w-4 h-4 text-slate-950" />
               <span>🔧 Iniciar Revisión / Hallazgos</span>
             </button>
           )}
@@ -735,8 +736,8 @@ export default function DetalleOrdenPage(props: PageProps) {
       {/* ============================================================ */}
       {loading && !orden && (
         <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center space-y-4 shadow-sm animate-pulse print:hidden">
-          <div className="w-12 h-12 bg-orange-100 rounded-full mx-auto flex items-center justify-center">
-            <RefreshCw className="w-6 h-6 text-orange-600 animate-spin" />
+          <div className="w-12 h-12 bg-visu-mint/20 rounded-full mx-auto flex items-center justify-center">
+            <RefreshCw className="w-6 h-6 text-visu-blue animate-spin" />
           </div>
           <p className="text-sm font-semibold text-slate-700">
             Cargando informe y ficha técnica de la Orden de Trabajo...
@@ -780,19 +781,21 @@ export default function DetalleOrdenPage(props: PageProps) {
           <div className="border-b-2 border-slate-900 pb-5 print:pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             {/* Logo y Nombre Institucional */}
             <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-xl bg-orange-600 flex items-center justify-center text-white shadow-sm shrink-0 print:bg-orange-600 print:text-white">
-                <Wrench className="w-6 h-6 stroke-[2.3]" />
+              <div className="flex items-center">
+                <Image
+                  src="/visu-logo.png"
+                  alt="Visú"
+                  width={140}
+                  height={50}
+                  priority
+                  className="h-10 w-auto object-contain"
+                />
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl font-black tracking-tight text-slate-900">
-                    Vis<span className="text-orange-600">ú</span>
-                  </span>
-                  <span className="text-[10px] font-bold tracking-wider uppercase bg-slate-900 text-white px-2 py-0.5 rounded">
-                    Taller Mecánico
-                  </span>
-                </div>
-                <p className="text-xs font-semibold text-slate-600 tracking-wide uppercase mt-0.5">
+              <div className="border-l border-slate-200 pl-3">
+                <span className="text-[10px] font-bold tracking-wider uppercase bg-visu-mint/20 text-visu-blue px-2 py-0.5 rounded border border-visu-mint/50">
+                  Taller Mecánico
+                </span>
+                <p className="text-xs font-semibold text-slate-600 tracking-wide uppercase mt-1">
                   Informe Oficial de Recepción, Hallazgos y Presupuesto
                 </p>
               </div>
@@ -800,8 +803,8 @@ export default function DetalleOrdenPage(props: PageProps) {
 
             {/* Folio y Metadatos de Cabecera */}
             <div className="flex sm:flex-col items-end justify-between sm:justify-center border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100">
-              <div className="bg-slate-900 text-white px-3.5 py-1 rounded-lg text-right shadow-2xs">
-                <span className="text-[10px] uppercase font-bold tracking-widest text-orange-400 block">
+              <div className="bg-visu-blue text-white px-3.5 py-1 rounded-lg text-right shadow-2xs">
+                <span className="text-[10px] uppercase font-bold tracking-widest text-visu-mint block">
                   Folio Orden
                 </span>
                 <span className="text-base font-black tracking-tight">{numeroOT}</span>
@@ -829,7 +832,7 @@ export default function DetalleOrdenPage(props: PageProps) {
             {/* BLOQUE 1: DATOS DEL CLIENTE */}
             <div className="bg-slate-50/80 border border-slate-200 rounded-xl p-4 print:p-3 print:bg-white print:border-slate-300 space-y-3 print-avoid-break">
               <div className="flex items-center gap-2 pb-2 border-b border-slate-200/80">
-                <div className="w-6 h-6 rounded-lg bg-orange-100 text-orange-700 flex items-center justify-center shrink-0">
+                <div className="w-6 h-6 rounded-lg bg-visu-mint/20 text-visu-blue flex items-center justify-center shrink-0">
                   <User className="w-3.5 h-3.5" />
                 </div>
                 <h2 className="font-bold text-xs uppercase tracking-wider text-slate-900">
@@ -873,7 +876,7 @@ export default function DetalleOrdenPage(props: PageProps) {
             <div className="bg-slate-50/80 border border-slate-200 rounded-xl p-4 print:p-3 print:bg-white print:border-slate-300 space-y-3 print-avoid-break">
               <div className="flex items-center justify-between pb-2 border-b border-slate-200/80">
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-lg bg-slate-200 text-slate-800 flex items-center justify-center shrink-0">
+                  <div className="w-6 h-6 rounded-lg bg-visu-mint/20 text-visu-blue flex items-center justify-center shrink-0">
                     <Car className="w-3.5 h-3.5" />
                   </div>
                   <h2 className="font-bold text-xs uppercase tracking-wider text-slate-900">
@@ -907,7 +910,7 @@ export default function DetalleOrdenPage(props: PageProps) {
                     <span className="text-[10px] uppercase tracking-wider text-slate-600 font-bold block">
                       Kilometraje
                     </span>
-                    <p className="font-extrabold text-orange-700 font-mono">{kmVehiculo}</p>
+                    <p className="font-extrabold text-visu-blue font-mono">{kmVehiculo}</p>
                   </div>
                   <div>
                     <span className="text-[10px] uppercase tracking-wider text-slate-600 font-bold block">
@@ -926,7 +929,7 @@ export default function DetalleOrdenPage(props: PageProps) {
           <div className="bg-white border border-slate-200 rounded-xl p-4.5 print:p-3 print:border-slate-300 space-y-3 print-avoid-break">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-lg bg-orange-100 text-orange-700 flex items-center justify-center shrink-0">
+                <div className="w-6 h-6 rounded-lg bg-visu-mint/20 text-visu-blue flex items-center justify-center shrink-0">
                   <FileText className="w-3.5 h-3.5" />
                 </div>
                 <h2 className="font-bold text-xs uppercase tracking-wider text-slate-900">
@@ -935,7 +938,7 @@ export default function DetalleOrdenPage(props: PageProps) {
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-200">
+                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded bg-visu-mint/20 text-visu-blue border border-visu-mint/40">
                   Tipo: {tipoServicioLabel}
                 </span>
                 <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded bg-slate-100 text-slate-800 border border-slate-200">
@@ -1041,7 +1044,7 @@ export default function DetalleOrdenPage(props: PageProps) {
           <div className="bg-white border border-slate-200 rounded-xl p-4.5 print:p-3 print:border-slate-300 space-y-3.5 print-avoid-break">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-lg bg-orange-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                <div className="w-6 h-6 rounded-lg bg-visu-blue text-white flex items-center justify-center shrink-0 shadow-2xs">
                   <Wrench className="w-3.5 h-3.5" />
                 </div>
                 <div>
@@ -1054,7 +1057,7 @@ export default function DetalleOrdenPage(props: PageProps) {
               <button
                 type="button"
                 onClick={handleIniciarHallazgos}
-                className="text-[11px] font-bold text-orange-600 hover:text-orange-700 underline print:hidden inline-flex items-center gap-1 cursor-pointer bg-transparent border-0 p-0"
+                className="text-[11px] font-bold text-visu-blue hover:text-visu-mint-dark underline print:hidden inline-flex items-center gap-1 cursor-pointer bg-transparent border-0 p-0"
               >
                 <span>Editar Hallazgos en Taller</span>
                 <span>→</span>
@@ -1070,9 +1073,9 @@ export default function DetalleOrdenPage(props: PageProps) {
                 <button
                   type="button"
                   onClick={handleIniciarHallazgos}
-                  className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-xl text-sm inline-flex items-center gap-2 transition-all shadow-2xs cursor-pointer print:hidden"
+                  className="bg-visu-mint hover:bg-visu-mint/90 active:bg-visu-mint-dark text-slate-950 font-bold px-4 py-2 rounded-xl text-sm inline-flex items-center gap-2 transition-all shadow-md shadow-visu-mint/20 cursor-pointer print:hidden"
                 >
-                  <PlusCircle className="w-4 h-4" />
+                  <PlusCircle className="w-4 h-4 text-slate-950" />
                   <span>Registrar Hallazgos</span>
                 </button>
               </div>
@@ -1179,7 +1182,7 @@ export default function DetalleOrdenPage(props: PageProps) {
                 </div>
                 <div className="pt-1.5 border-t border-slate-300 flex items-center justify-between font-black text-sm text-slate-900">
                   <span>Total General:</span>
-                  <span className="font-mono text-base text-orange-700">
+                  <span className="font-mono text-base font-black text-visu-blue">
                     {formatearPesos(totalGeneral)}
                   </span>
                 </div>

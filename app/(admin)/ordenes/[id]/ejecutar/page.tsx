@@ -691,7 +691,7 @@ export default function EjecutarReparacionPage(props: PageProps) {
         <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
           <div>
             <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
-              <Wrench className="w-5 h-5 text-orange-600" />
+              <Wrench className="w-5 h-5 text-visu-blue" />
               <span>Ejecutar Reparación & Hallazgos</span>
             </h1>
             <p className="text-xs text-slate-600 mt-0.5">{auto}</p>
@@ -702,9 +702,9 @@ export default function EjecutarReparacionPage(props: PageProps) {
             <button
               type="button"
               onClick={() => setPaso(1)}
-              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 paso === 1
-                  ? 'bg-orange-600 text-white shadow-2xs'
+                  ? 'bg-visu-blue text-white shadow-2xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -713,9 +713,9 @@ export default function EjecutarReparacionPage(props: PageProps) {
             <button
               type="button"
               onClick={() => setPaso(2)}
-              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 paso === 2
-                  ? 'bg-orange-600 text-white shadow-2xs'
+                  ? 'bg-visu-blue text-white shadow-2xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -747,7 +747,7 @@ export default function EjecutarReparacionPage(props: PageProps) {
       {/* ============================================================ */}
       {loading && (
         <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center space-y-3">
-          <Loader2 className="w-6 h-6 text-orange-600 animate-spin mx-auto" />
+          <Loader2 className="w-6 h-6 text-visu-blue animate-spin mx-auto" />
           <p className="text-xs font-semibold text-slate-600">Cargando orden y hallazgos...</p>
         </div>
       )}
@@ -757,8 +757,8 @@ export default function EjecutarReparacionPage(props: PageProps) {
       {/* ============================================================ */}
       {!loading && paso === 1 && (
         <div className="space-y-4">
-          <div className="bg-orange-50/70 border border-orange-200 rounded-xl p-3 text-xs text-orange-900 flex items-center gap-2.5">
-            <Sparkles className="w-4 h-4 text-orange-600 shrink-0" />
+          <div className="bg-visu-mint/20 border border-visu-mint/40 rounded-xl p-3 text-xs text-slate-900 flex items-center gap-2.5">
+            <Sparkles className="w-4 h-4 text-visu-blue shrink-0" />
             <span>
               Registra cada anomalía o repuesto detectado en taller. Usa <strong>Dictar</strong> o{' '}
               <strong>Mejorar con IA</strong> para autogenerar títulos y redacción técnica.
@@ -777,7 +777,7 @@ export default function EjecutarReparacionPage(props: PageProps) {
                 {/* Cabecera de la Tarjeta del Hallazgo */}
                 <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                   <div className="flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-lg bg-orange-600 text-white font-extrabold text-xs flex items-center justify-center shadow-2xs">
+                    <span className="w-6 h-6 rounded-lg bg-visu-blue text-white font-extrabold text-xs flex items-center justify-center shadow-2xs">
                       {index + 1}
                     </span>
                     <span className="font-extrabold text-xs text-slate-800 uppercase tracking-wider">
@@ -837,7 +837,7 @@ export default function EjecutarReparacionPage(props: PageProps) {
                           </>
                         ) : (
                           <>
-                            <Mic className="w-3.5 h-3.5 text-orange-600" />
+                            <Mic className="w-3.5 h-3.5 text-visu-blue" />
                             <span>Dictar</span>
                           </>
                         )}
@@ -848,7 +848,7 @@ export default function EjecutarReparacionPage(props: PageProps) {
                         type="button"
                         onClick={() => handleGenerarConIA(item)}
                         disabled={item.isGeneratingAI}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 transition-colors disabled:opacity-60"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-visu-mint/20 hover:bg-visu-mint/30 text-visu-blue border border-visu-mint/40 transition-colors disabled:opacity-60 cursor-pointer"
                         title="Generar título y mejorar redacción con IA"
                       >
                         {item.isGeneratingAI ? (
@@ -858,7 +858,7 @@ export default function EjecutarReparacionPage(props: PageProps) {
                           </>
                         ) : (
                           <>
-                            <Sparkles className="w-3.5 h-3.5 text-orange-600" />
+                            <Sparkles className="w-3.5 h-3.5 text-visu-blue" />
                             <span>✨ Mejorar con IA</span>
                           </>
                         )}
@@ -956,16 +956,16 @@ export default function EjecutarReparacionPage(props: PageProps) {
                       <button
                         type="button"
                         onClick={() => cameraInputRefs.current[item.id]?.click()}
-                        className="flex-1 py-2.5 px-3 rounded-xl border border-dashed border-slate-300 hover:border-orange-500 bg-slate-50/80 hover:bg-orange-50/30 text-slate-700 transition-colors flex items-center justify-center gap-2 text-xs font-semibold"
+                        className="flex-1 py-2.5 px-3 rounded-xl border border-dashed border-visu-mint/60 hover:border-visu-mint bg-visu-mint/5 hover:bg-visu-mint/15 text-slate-900 transition-colors flex items-center justify-center gap-2 text-xs font-semibold cursor-pointer"
                       >
-                        <Camera className="w-4 h-4 text-orange-600" />
+                        <Camera className="w-4 h-4 text-visu-blue" />
                         <span>Tomar Foto con Cámara</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => galleryInputRefs.current[item.id]?.click()}
-                        className="py-2.5 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors flex items-center gap-1.5 text-xs font-semibold"
+                        className="py-2.5 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors flex items-center gap-1.5 text-xs font-semibold cursor-pointer"
                         title="Subir desde galería"
                       >
                         <ImageIcon className="w-4 h-4 text-slate-500" />
@@ -982,7 +982,7 @@ export default function EjecutarReparacionPage(props: PageProps) {
           <button
             type="button"
             onClick={handleAgregarItem}
-            className="w-full py-3 rounded-2xl border-2 border-dashed border-slate-300 hover:border-orange-500 bg-white hover:bg-orange-50/20 text-slate-700 hover:text-orange-600 font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-2xs cursor-pointer"
+            className="w-full py-3 rounded-2xl border-2 border-dashed border-slate-300 hover:border-visu-mint bg-white hover:bg-visu-mint/5 text-slate-700 hover:text-visu-blue font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-2xs cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>+ Agregar otro hallazgo</span>
@@ -1010,14 +1010,14 @@ export default function EjecutarReparacionPage(props: PageProps) {
               type="button"
               disabled={saving}
               onClick={handleTerminarYPasarAPresupuesto}
-              className="w-full sm:w-auto flex-1 bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3.5 px-5 rounded-2xl text-sm transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+              className="w-full sm:w-auto flex-1 bg-visu-mint hover:bg-visu-mint/90 active:bg-visu-mint-dark text-slate-950 font-bold py-3.5 px-5 rounded-2xl text-sm transition-all shadow-md shadow-visu-mint/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
             >
               {saving ? (
-                <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                <RefreshCw className="w-4 h-4 animate-spin text-slate-950" />
               ) : (
                 <>
                   <span>Hallazgos Terminados: Pasar a Presupuesto</span>
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight className="w-4 h-4 text-slate-950" />
                 </>
               )}
             </button>
@@ -1032,13 +1032,13 @@ export default function EjecutarReparacionPage(props: PageProps) {
         <div className="space-y-4">
           <div className="bg-slate-900 text-white rounded-xl p-3.5 text-xs flex items-center justify-between gap-2 shadow-2xs">
             <div className="flex items-center gap-2">
-              <Calculator className="w-4 h-4 text-orange-400" />
+              <Calculator className="w-4 h-4 text-visu-mint" />
               <span className="font-semibold">Valorización de Reparación & Cotización</span>
             </div>
             <button
               type="button"
               onClick={() => setPaso(1)}
-              className="text-orange-400 hover:text-orange-300 text-xs font-bold underline cursor-pointer"
+              className="text-visu-mint hover:text-visu-mint-light text-xs font-bold underline cursor-pointer"
             >
               Editar Hallazgos
             </button>
@@ -1052,7 +1052,7 @@ export default function EjecutarReparacionPage(props: PageProps) {
                 className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3"
               >
                 <div className="flex items-start gap-3 flex-1 min-w-0">
-                  <span className="w-6 h-6 rounded-lg bg-orange-100 text-orange-700 font-extrabold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="w-6 h-6 rounded-lg bg-visu-mint/20 text-visu-blue font-extrabold text-xs flex items-center justify-center shrink-0 mt-0.5">
                     {index + 1}
                   </span>
 
@@ -1113,7 +1113,7 @@ export default function EjecutarReparacionPage(props: PageProps) {
           <div className="bg-white border-2 border-slate-900 rounded-2xl p-5 shadow-sm space-y-3">
             <h3 className="font-black text-xs uppercase tracking-wider text-slate-900 pb-2 border-b border-slate-100 flex items-center justify-between">
               <span>Resumen Presupuestario</span>
-              <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded">
+              <span className="text-[10px] font-bold text-visu-blue bg-visu-mint/20 border border-visu-mint/40 px-2 py-0.5 rounded">
                 Valores en Pesos Chilenos
               </span>
             </h3>
@@ -1140,7 +1140,7 @@ export default function EjecutarReparacionPage(props: PageProps) {
                   </span>
                   <span className="text-[10px] text-slate-600">IVA incluido</span>
                 </div>
-                <span className="text-xl font-black font-mono text-orange-600">
+                <span className="text-xl font-black font-mono text-visu-blue">
                   {formatearPesos(totalGeneral)}
                 </span>
               </div>
@@ -1152,7 +1152,7 @@ export default function EjecutarReparacionPage(props: PageProps) {
             <button
               type="button"
               onClick={() => setPaso(1)}
-              className="py-3 px-4 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs sm:text-sm transition-all"
+              className="py-3 px-4 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs sm:text-sm transition-all cursor-pointer"
             >
               ← Volver a Hallazgos
             </button>
@@ -1161,16 +1161,16 @@ export default function EjecutarReparacionPage(props: PageProps) {
               type="button"
               onClick={handleGuardarTodo}
               disabled={saving}
-              className="flex-1 py-3 px-4 rounded-xl bg-orange-600 hover:bg-orange-700 active:scale-98 text-white font-bold text-xs sm:text-sm transition-all shadow-sm shadow-orange-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+              className="flex-1 py-3 px-4 rounded-xl bg-visu-mint hover:bg-visu-mint/90 active:bg-visu-mint-dark text-slate-950 font-bold text-xs sm:text-sm transition-all shadow-md shadow-visu-mint/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
             >
               {saving ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
                   <span>Guardando Presupuesto...</span>
                 </>
               ) : (
                 <>
-                  <Save className="w-4 h-4" />
+                  <Save className="w-4 h-4 text-slate-950" />
                   <span>Guardar Hallazgos y Presupuesto</span>
                 </>
               )}
