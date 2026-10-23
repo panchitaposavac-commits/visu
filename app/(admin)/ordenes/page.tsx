@@ -279,13 +279,13 @@ export default function TableroOrdenesPage() {
       {/* Barra de Filtros */}
       <div className="bg-white border border-slate-200 rounded-xl p-3 sm:p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="relative w-full sm:max-w-md">
-          <Search className="w-4 h-4 text-slate-600 absolute left-3 top-3" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
           <input
             type="text"
             placeholder="Buscar por OT, Patente o Cliente..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-visu-mint/40 focus:border-visu-mint"
+            className="w-full pl-12 pr-4 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-visu-mint/40 focus:border-visu-mint"
           />
         </div>
 

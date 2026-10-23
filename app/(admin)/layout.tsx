@@ -1,12 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  ClipboardPlus,
-  Kanban,
+  Home,
+  Plus,
+  ClipboardList,
   LogOut,
   ShieldCheck,
   Sparkles,
@@ -26,23 +27,61 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   {
-    label: 'Recepción de Vehículo',
-    shortLabel: 'Recepción',
-    href: '/recepcion',
-    icon: ClipboardPlus,
-    badge: 'Nuevo',
+    label: 'Inicio',
+    shortLabel: 'Inicio',
+    href: '/',
+    icon: Home,
   },
   {
-    label: 'Tablero de Órdenes',
-    shortLabel: 'Órdenes',
+    label: 'Nuevo Ingreso',
+    shortLabel: 'Nuevo',
+    href: '/recepcion',
+    icon: Plus,
+  },
+  {
+    label: 'Historial de Órdenes',
+    shortLabel: 'Historial',
     href: '/ordenes',
-    icon: Kanban,
+    icon: ClipboardList,
   },
 ];
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const [isInputFocused, setIsInputFocused] = useState(false);
+
+  // Detecta si el formulario de recepción está activo
+  const isFormActive = pathname === '/recepcion' || pathname?.startsWith('/recepcion');
+  const isDashboard = pathname === '/';
+
+  // Ocultamiento dinámico de la navegación al enfocar cualquier input o textarea
+  useEffect(() => {
+    const handleFocusIn = (e: FocusEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable)
+      ) {
+        setIsInputFocused(true);
+      }
+    };
+
+    const handleFocusOut = () => {
+      setIsInputFocused(false);
+    };
+
+    window.addEventListener('focusin', handleFocusIn);
+    window.addEventListener('focusout', handleFocusOut);
+
+    return () => {
+      window.removeEventListener('focusin', handleFocusIn);
+      window.removeEventListener('focusout', handleFocusOut);
+    };
+  }, []);
 
   const handleLogout = () => {
     router.push('/');
@@ -169,10 +208,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       {/* 2. HEADER SUPERIOR COMPACTO (Mobile & Desktop)              */}
       {/* ============================================================ */}
       <div className="flex-1 flex flex-col min-w-0 print:w-full print:block">
-        <header className="h-14 md:h-16 bg-white border-b border-slate-200 px-4 md:px-8 flex items-center justify-between sticky top-0 z-30 shadow-2xs print:hidden">
-          {/* Logo y Nombre en Móvil */}
+        <header className={`h-14 md:h-16 bg-white border-b border-slate-200 px-4 md:px-8 flex items-center justify-between sticky top-0 z-30 shadow-2xs print:hidden ${isDashboard ? 'hidden md:flex' : 'flex'}`}>
+          {/* Logo y Nombre en Móvil (Se oculta en móvil cuando el formulario está activo) */}
           <div className="flex items-center gap-2.5">
-            <div className="md:hidden flex items-center">
+            <div className={`items-center ${isFormActive ? 'hidden md:flex' : 'flex md:hidden'}`}>
               <Link href="/recepcion" className="flex items-center gap-2">
                 <Image
                   src="/visu-logo.png"
@@ -184,14 +223,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 />
               </Link>
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-wider bg-visu-mint/20 text-visu-blue px-2 py-0.5 rounded border border-visu-mint/40 hidden sm:inline-block">
+            <span className={`text-[10px] font-bold uppercase tracking-wider bg-visu-mint/20 text-visu-blue px-2 py-0.5 rounded border border-visu-mint/40 ${isFormActive ? 'hidden md:inline-block' : 'hidden sm:inline-block'}`}>
               Terreno
             </span>
           </div>
 
-          {/* Estado de Conexión & Salida */}
+          {/* Estado de Conexión & Salida (Banner 'En Línea' se oculta en móvil con hidden md:flex cuando el form está activo) */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200">
+            <div className={`items-center gap-2 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200 ${isFormActive ? 'hidden md:flex' : 'flex'}`}>
               <span className="w-2 h-2 rounded-full bg-visu-mint animate-pulse"></span>
               <span className="text-xs font-semibold text-slate-700 hidden sm:inline">En Línea</span>
               <ShieldCheck className="w-3.5 h-3.5 text-visu-mint sm:hidden" />
@@ -211,7 +250,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         {/* ============================================================ */}
         {/* 3. CONTENEDOR PRINCIPAL FLUIDO CON SAFE BOTTOM PADDING      */}
         {/* ============================================================ */}
-        <main className="flex-1 w-full max-w-5xl mx-auto p-3.5 sm:p-6 md:p-8 pb-28 md:pb-8 overflow-x-hidden print:p-0 print:max-w-none print:m-0 print:overflow-visible print:w-full">
+        <main className={`flex-1 w-full max-w-5xl mx-auto p-3.5 sm:p-6 md:p-8 overflow-x-hidden print:p-0 print:max-w-none print:m-0 print:overflow-visible print:w-full transition-[padding] duration-200 ${
+          isInputFocused ? 'pb-6 md:pb-8' : 'pb-28 md:pb-8'
+        }`}>
           {children}
         </main>
       </div>
@@ -221,7 +262,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       {/* ============================================================ */}
       <nav
         aria-label="Navegación móvil inferior"
-        className="md:hidden fixed bottom-0 left-0 right-0 bg-visu-blue/95 backdrop-blur-md border-t border-blue-900/50 z-40 px-3 py-2 flex items-center justify-around shadow-lg select-none print:hidden text-white"
+        className={`md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 z-40 px-3 py-1.5 flex items-center justify-around shadow-lg select-none print:hidden transition-all duration-300 ease-in-out ${
+          isInputFocused
+            ? 'translate-y-full opacity-0 pointer-events-none'
+            : 'translate-y-0 opacity-100'
+        }`}
         style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
       >
         {NAV_ITEMS.map((item) => {
@@ -234,15 +279,15 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex-1 flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-all duration-150 active:scale-95 ${
+              className={`flex-1 flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all duration-150 active:scale-95 ${
                 isActive
-                  ? 'text-visu-mint font-bold'
-                  : 'text-blue-200/80 hover:text-white'
+                  ? 'text-visu-blue font-bold'
+                  : 'text-slate-400 hover:text-slate-600 font-medium'
               }`}
             >
               <div
                 className={`w-10 h-7 rounded-full flex items-center justify-center transition-colors mb-0.5 ${
-                  isActive ? 'bg-blue-950/70 text-visu-mint' : 'text-blue-200/80'
+                  isActive ? 'text-visu-blue' : 'text-slate-400'
                 }`}
               >
                 <Icon className="w-5 h-5" />
@@ -251,17 +296,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             </Link>
           );
         })}
-
-        {/* Botón Salir en Bottom Bar */}
-        <button
-          onClick={handleLogout}
-          className="flex-1 flex flex-col items-center justify-center py-1.5 px-2 rounded-xl text-blue-200/80 hover:text-red-300 transition-all active:scale-95 cursor-pointer"
-        >
-          <div className="w-10 h-7 rounded-full flex items-center justify-center mb-0.5">
-            <LogOut className="w-5 h-5 text-blue-200/80" />
-          </div>
-          <span className="text-[11px] tracking-tight">Salir</span>
-        </button>
       </nav>
     </div>
   );

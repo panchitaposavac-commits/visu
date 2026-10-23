@@ -31,26 +31,7 @@ body {
 }
 
 /* Normalización visual de inputs y formularios Mobile-First (16px base en móvil para evitar zoom en iOS) */
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="number"],
-input[type="tel"],
-input[type="datetime-local"],
-select,
-textarea {
-  border: 1px solid #cbd5e1;
-  border-radius: 0.75rem;
-  padding: 0.75rem 1rem;
-  font-size: 1rem; /* 16px en móvil previene auto-zoom en iOS Safari */
-  color: #0f172a;
-  background-color: #ffffff;
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  outline: none;
-  transition: all 0.15s ease-in-out;
-}
-
-@media (min-width: 640px) {
+@layer base {
   input[type="text"],
   input[type="email"],
   input[type="password"],
@@ -59,16 +40,37 @@ textarea {
   input[type="datetime-local"],
   select,
   textarea {
-    font-size: 0.875rem;
-    padding: 0.625rem 0.875rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    font-size: 1rem; /* 16px en móvil previene auto-zoom en iOS Safari */
+    color: #0f172a;
+    background-color: #ffffff;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    outline: none;
+    transition: all 0.15s ease-in-out;
   }
-}
 
-input:focus,
-select:focus,
-textarea:focus {
-  border-color: #51DCAE;
-  box-shadow: 0 0 0 3px rgba(81, 220, 174, 0.25);
+  @media (min-width: 640px) {
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    input[type="tel"],
+    input[type="datetime-local"],
+    select,
+    textarea {
+      font-size: 0.875rem;
+      padding: 0.625rem 0.875rem;
+    }
+  }
+
+  input:focus,
+  select:focus,
+  textarea:focus {
+    border-color: #51DCAE;
+    box-shadow: 0 0 0 3px rgba(81, 220, 174, 0.25);
+  }
 }
 
 /* ========================================================================= */

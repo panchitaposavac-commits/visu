@@ -173,6 +173,23 @@ export default function RecepcionWizardPage() {
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const textBeforeDictationRef = useRef<string>('');
 
+  // Ref y auto-ajuste dinámico de altura para el textarea de síntomas
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${Math.max(76, textareaRef.current.scrollHeight)}px`;
+    }
+  }, [diagnosticData.descripcion_cliente]);
+
+  // Posicionamiento suave del campo enfocado en la parte superior (evita tapado por teclado móvil)
+  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setTimeout(() => {
+      e.target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 150);
+  };
+
   // Limpieza de reconocimiento de voz al desmontar
   useEffect(() => {
     return () => {
@@ -184,6 +201,17 @@ export default function RecepcionWizardPage() {
         }
       }
     };
+  }, []);
+
+  // Preselección de servicio desde URL (?servicio=mantencion / ?servicio=reparacion)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const s = params.get('servicio');
+      if (s === 'mantencion' || s === 'reparacion') {
+        setDiagnosticData((prev) => ({ ...prev, tipo_servicio: s as TipoServicio }));
+      }
+    }
   }, []);
 
   // Manejador de Dictado por Voz (Speech-to-Text)
@@ -765,68 +793,82 @@ export default function RecepcionWizardPage() {
     <div className="w-full max-w-3xl mx-auto space-y-4 sm:space-y-6">
       {/* ------------------------------------------------------------- */}
       {/* 1. BARRA DE PROGRESO LINEAL COMPACTA & ENCABEZADO MÓVIL       */}
+      {/* (Renderizado condicional a partir del Paso 2 para UX Móvil)   */}
       {/* ------------------------------------------------------------- */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-2xs">
-        {/* Título & Badge de Paso */}
-        <div className="flex items-center justify-between gap-2 mb-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-visu-blue text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
-              {currentStep}
+      {currentStep > 1 && (
+        <div className="bg-white border border-slate-200 rounded-2xl p-3.5 sm:p-5 shadow-2xs">
+          {/* Título & Badge de Paso */}
+          <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-visu-blue text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                {currentStep}
+              </div>
+              <div>
+                <h1 className="text-sm sm:text-lg font-bold text-slate-900 leading-tight">
+                  {WIZARD_STEPS[currentStep - 1].title}
+                </h1>
+              </div>
             </div>
-            <div>
-              <h1 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
-                {WIZARD_STEPS[currentStep - 1].title}
-              </h1>
-              <p className="text-[11px] text-slate-600 hidden sm:block">
-                {WIZARD_STEPS[currentStep - 1].desc}
-              </p>
-            </div>
+
+            <span className="text-xs font-bold text-visu-blue bg-visu-mint/20 border border-visu-mint/40 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg shrink-0">
+              Paso {currentStep} de 5
+            </span>
           </div>
 
-          <span className="text-xs font-bold text-visu-blue bg-visu-mint/20 border border-visu-mint/40 px-2.5 py-1 rounded-lg shrink-0">
-            Paso {currentStep} de 5
-          </span>
-        </div>
+          {/* Barra de progreso lineal */}
+          <div className="w-full bg-slate-100 rounded-full h-1.5 sm:h-2 overflow-hidden mb-2 sm:mb-3">
+            <div
+              className="bg-visu-mint h-full rounded-full transition-all duration-300 ease-out"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
 
-        {/* Barra de progreso lineal */}
-        <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden mb-3">
-          <div
-            className="bg-visu-mint h-full rounded-full transition-all duration-300 ease-out"
-            style={{ width: `${progressPercent}%` }}
-          />
-        </div>
+          {/* Móvil: Texto simplificado del paso actual */}
+          <div className="md:hidden flex items-center justify-between text-xs font-semibold text-slate-700 px-1 py-0.5">
+            <span>
+              Paso {currentStep} de 5: <strong className="text-visu-blue">{WIZARD_STEPS[currentStep - 1].short}</strong>
+            </span>
+            <button
+              type="button"
+              onClick={handlePrev}
+              className="text-[11px] text-visu-blue font-bold hover:underline"
+            >
+              ← Anterior
+            </button>
+          </div>
 
-        {/* Pastillas de navegación táctil compactas (5 pasos) */}
-        <div className="grid grid-cols-5 gap-1 sm:gap-1.5 text-center">
-          {WIZARD_STEPS.map((stepItem) => {
-            const isCompleted = currentStep > stepItem.step;
-            const isCurrent = currentStep === stepItem.step;
+          {/* Desktop: Fila completa de pastillas de navegación */}
+          <div className="hidden md:grid md:grid-cols-5 gap-1.5 text-center">
+            {WIZARD_STEPS.map((stepItem) => {
+              const isCompleted = currentStep > stepItem.step;
+              const isCurrent = currentStep === stepItem.step;
 
-            return (
-              <button
-                key={stepItem.step}
-                type="button"
-                onClick={() => {
-                  if (stepItem.step < currentStep) {
-                    setCurrentStep(stepItem.step);
-                    setGlobalError(null);
-                  }
-                }}
-                disabled={stepItem.step > currentStep}
-                className={`py-1 px-0.5 sm:px-1 rounded-lg text-[10px] sm:text-xs font-semibold truncate transition-colors ${
-                  isCurrent
-                    ? 'bg-visu-blue text-white shadow-2xs'
-                    : isCompleted
-                    ? 'bg-visu-mint/20 text-visu-blue font-bold hover:bg-visu-mint/30'
-                    : 'text-slate-600 opacity-60 cursor-not-allowed'
-                }`}
-              >
-                {stepItem.short}
-              </button>
-            );
-          })}
+              return (
+                <button
+                  key={stepItem.step}
+                  type="button"
+                  onClick={() => {
+                    if (stepItem.step < currentStep) {
+                      setCurrentStep(stepItem.step);
+                      setGlobalError(null);
+                    }
+                  }}
+                  disabled={stepItem.step > currentStep}
+                  className={`py-1.5 px-1 rounded-lg text-xs font-semibold truncate transition-colors ${
+                    isCurrent
+                      ? 'bg-visu-blue text-white shadow-2xs'
+                      : isCompleted
+                      ? 'bg-visu-mint/20 text-visu-blue font-bold hover:bg-visu-mint/30'
+                      : 'text-slate-600 opacity-60 cursor-not-allowed'
+                  }`}
+                >
+                  {stepItem.short}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Alerta de Error Global */}
       {globalError && (
@@ -854,14 +896,11 @@ export default function RecepcionWizardPage() {
         {/* ========================================================= */}
         {currentStep === 1 && (
           <div className="space-y-4 sm:space-y-5">
-            <div className="border-b border-slate-100 pb-3">
+            <div className="border-b border-slate-100 pb-2.5">
               <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
                 <Wrench className="w-4 h-4 text-visu-blue" />
                 <span>Tipo de Servicio y Motivo de Ingreso</span>
               </h2>
-              <p className="text-xs text-slate-600 mt-0.5">
-                Especifica la modalidad del trabajo a realizar y el requerimiento reportado por el cliente.
-              </p>
             </div>
 
             {/* Selector Visual de Tipo de Servicio */}
@@ -969,17 +1008,17 @@ export default function RecepcionWizardPage() {
               )}
 
               <textarea
+                ref={textareaRef}
                 name="descripcion_cliente"
                 value={diagnosticData.descripcion_cliente}
                 onChange={handleDiagnosticChange}
-                rows={4}
-                placeholder="Indica con detalle lo reportado por el cliente o síntomas (puedes escribir o usar el botón Dictar)..."
-                className="w-full px-3.5 py-2.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl"
+                onFocus={handleInputFocus}
+                rows={2}
+                placeholder="Detalla síntomas, ruidos, mantención o anomalías reportadas (escribe o presiona Dictar)..."
+                className="w-full px-3.5 py-2.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl resize-none transition-[height] duration-100"
+                style={{ minHeight: '76px' }}
                 required
               />
-              <p className="text-[11px] text-slate-600 mt-1">
-                Detalla ruidos, pautas de kilometraje solicitadas o anomalías mencionadas por el conductor.
-              </p>
             </div>
           </div>
         )}
@@ -989,14 +1028,11 @@ export default function RecepcionWizardPage() {
         {/* ========================================================= */}
         {currentStep === 2 && (
           <div className="space-y-4 sm:space-y-5">
-            <div className="border-b border-slate-100 pb-3">
+            <div className="border-b border-slate-100 pb-2.5">
               <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
                 <User className="w-4 h-4 text-visu-blue" />
                 <span>Identificación y Contacto del Cliente</span>
               </h2>
-              <p className="text-xs text-slate-600 mt-0.5">
-                Información para el envío de presupuestos, comprobante y trazabilidad.
-              </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
@@ -1011,13 +1047,14 @@ export default function RecepcionWizardPage() {
                     name="rut_dni"
                     value={clientData.rut_dni}
                     onChange={handleClientChange}
-                    placeholder="Ej: 12.345.678-9"
+                    onFocus={handleInputFocus}
+                    placeholder="Ej: 12.345.678-9 (RUT / DNI del cliente)"
                     autoCapitalize="characters"
                     autoCorrect="off"
-                    className="w-full pl-10 pr-3.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl"
+                    className="w-full pl-12 pr-3.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl"
                     required
                   />
-                  <Shield className="w-4 h-4 text-slate-600 absolute left-3.5 top-3.5 sm:top-3" />
+                  <Shield className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 sm:top-3 pointer-events-none" />
                 </div>
               </div>
 
@@ -1026,16 +1063,20 @@ export default function RecepcionWizardPage() {
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
                   Nombre <span className="text-visu-blue font-bold">*</span>
                 </label>
-                <input
-                  type="text"
-                  name="nombre"
-                  value={clientData.nombre}
-                  onChange={handleClientChange}
-                  placeholder="Ej: Carlos"
-                  autoComplete="given-name"
-                  className="w-full px-3.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl"
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    name="nombre"
+                    value={clientData.nombre}
+                    onChange={handleClientChange}
+                    onFocus={handleInputFocus}
+                    placeholder="Nombre del cliente"
+                    autoComplete="given-name"
+                    className="w-full pl-12 pr-3.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl"
+                    required
+                  />
+                  <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 sm:top-3 pointer-events-none" />
+                </div>
               </div>
 
               {/* Apellido */}
@@ -1043,16 +1084,20 @@ export default function RecepcionWizardPage() {
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
                   Apellido <span className="text-visu-blue font-bold">*</span>
                 </label>
-                <input
-                  type="text"
-                  name="apellido"
-                  value={clientData.apellido}
-                  onChange={handleClientChange}
-                  placeholder="Ej: Morales"
-                  autoComplete="family-name"
-                  className="w-full px-3.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl"
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    name="apellido"
+                    value={clientData.apellido}
+                    onChange={handleClientChange}
+                    onFocus={handleInputFocus}
+                    placeholder="Apellido del cliente"
+                    autoComplete="family-name"
+                    className="w-full pl-12 pr-3.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl"
+                    required
+                  />
+                  <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 sm:top-3 pointer-events-none" />
+                </div>
               </div>
 
               {/* Teléfono / WhatsApp */}
@@ -1067,12 +1112,13 @@ export default function RecepcionWizardPage() {
                     name="telefono"
                     value={clientData.telefono}
                     onChange={handleClientChange}
-                    placeholder="+56 9 1234 5678"
+                    onFocus={handleInputFocus}
+                    placeholder="+56 9 1234 5678 (WhatsApp / Contacto)"
                     autoComplete="tel"
-                    className="w-full pl-10 pr-3.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl"
+                    className="w-full pl-12 pr-3.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl"
                     required
                   />
-                  <Phone className="w-4 h-4 text-slate-600 absolute left-3.5 top-3.5 sm:top-3" />
+                  <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 sm:top-3 pointer-events-none" />
                 </div>
               </div>
 
@@ -1088,14 +1134,15 @@ export default function RecepcionWizardPage() {
                     name="correo"
                     value={clientData.correo}
                     onChange={handleClientChange}
-                    placeholder="cliente@ejemplo.com"
+                    onFocus={handleInputFocus}
+                    placeholder="cliente@ejemplo.com (para envío digital de OT)"
                     autoCapitalize="none"
                     autoCorrect="off"
                     autoComplete="email"
-                    className="w-full pl-10 pr-3.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl"
+                    className="w-full pl-12 pr-3.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl"
                     required
                   />
-                  <Mail className="w-4 h-4 text-slate-600 absolute left-3.5 top-3.5 sm:top-3" />
+                  <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 sm:top-3 pointer-events-none" />
                 </div>
               </div>
             </div>
@@ -1107,14 +1154,11 @@ export default function RecepcionWizardPage() {
         {/* ========================================================= */}
         {currentStep === 3 && (
           <div className="space-y-4 sm:space-y-5">
-            <div className="border-b border-slate-100 pb-3">
+            <div className="border-b border-slate-100 pb-2.5">
               <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
                 <Car className="w-4 h-4 text-visu-blue" />
                 <span>Ficha Técnica de la Unidad</span>
               </h2>
-              <p className="text-xs text-slate-600 mt-0.5">
-                Ingresa la patente y características del vehículo recibido en taller.
-              </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
@@ -1129,14 +1173,15 @@ export default function RecepcionWizardPage() {
                     name="patente"
                     value={vehicleData.patente}
                     onChange={handleVehicleChange}
+                    onFocus={handleInputFocus}
                     placeholder="ABCD12"
                     maxLength={10}
                     autoCapitalize="characters"
                     autoCorrect="off"
-                    className="w-full pl-10 pr-3.5 text-lg sm:text-base font-extrabold uppercase tracking-widest text-slate-900 rounded-xl"
+                    className="w-full pl-12 pr-3.5 text-lg sm:text-base font-extrabold uppercase tracking-widest text-slate-900 rounded-xl"
                     required
                   />
-                  <Car className="w-4 h-4 text-slate-600 absolute left-3.5 top-3.5 sm:top-3" />
+                  <Car className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 sm:top-3 pointer-events-none" />
                 </div>
               </div>
 
@@ -1150,6 +1195,7 @@ export default function RecepcionWizardPage() {
                   name="marca"
                   value={vehicleData.marca}
                   onChange={handleVehicleChange}
+                  onFocus={handleInputFocus}
                   placeholder="Ej: Toyota"
                   className="w-full px-3.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl"
                   required
@@ -1166,6 +1212,7 @@ export default function RecepcionWizardPage() {
                   name="modelo"
                   value={vehicleData.modelo}
                   onChange={handleVehicleChange}
+                  onFocus={handleInputFocus}
                   placeholder="Ej: RAV4"
                   className="w-full px-3.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl"
                   required
@@ -1184,12 +1231,13 @@ export default function RecepcionWizardPage() {
                     name="kilometraje"
                     value={vehicleData.kilometraje}
                     onChange={handleVehicleChange}
-                    placeholder="85000"
+                    onFocus={handleInputFocus}
+                    placeholder="Ej: 85000"
                     min={0}
-                    className="w-full pl-10 pr-3.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl"
+                    className="w-full pl-12 pr-3.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl"
                     required
                   />
-                  <Gauge className="w-4 h-4 text-slate-600 absolute left-3.5 top-3.5 sm:top-3" />
+                  <Gauge className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 sm:top-3 pointer-events-none" />
                 </div>
               </div>
 
@@ -1204,6 +1252,7 @@ export default function RecepcionWizardPage() {
                   name="anio"
                   value={vehicleData.anio}
                   onChange={handleVehicleChange}
+                  onFocus={handleInputFocus}
                   min={1980}
                   max={new Date().getFullYear() + 1}
                   className="w-full px-3.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl"
@@ -1222,11 +1271,12 @@ export default function RecepcionWizardPage() {
                     name="color"
                     value={vehicleData.color}
                     onChange={handleVehicleChange}
-                    placeholder="Gris Plata"
-                    className="w-full pl-10 pr-3.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl"
+                    onFocus={handleInputFocus}
+                    placeholder="Ej: Gris Plata"
+                    className="w-full pl-12 pr-3.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl"
                     required
                   />
-                  <Palette className="w-4 h-4 text-slate-600 absolute left-3.5 top-3.5 sm:top-3" />
+                  <Palette className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 sm:top-3 pointer-events-none" />
                 </div>
               </div>
             </div>
@@ -1238,15 +1288,12 @@ export default function RecepcionWizardPage() {
         {/* ========================================================= */}
         {currentStep === 4 && (
           <div className="space-y-4 sm:space-y-5">
-            <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
+            <div className="border-b border-slate-100 pb-2.5 flex items-center justify-between">
               <div>
                 <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
                   <Camera className="w-4 h-4 text-visu-blue" />
                   <span>Evidencias Fotográficas Iniciales</span>
                 </h2>
-                <p className="text-xs text-slate-600 mt-0.5">
-                  Toma fotos en terreno para respaldar el estado exterior y detalles de ingreso.
-                </p>
               </div>
 
               <span className="text-xs font-bold bg-visu-mint/20 text-visu-blue px-2.5 py-1 rounded-full border border-visu-mint/40 shrink-0">
@@ -1402,14 +1449,11 @@ export default function RecepcionWizardPage() {
         {/* ========================================================= */}
         {currentStep === 5 && (
           <div className="space-y-4 sm:space-y-5">
-            <div className="border-b border-slate-100 pb-3">
+            <div className="border-b border-slate-100 pb-2.5">
               <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-visu-blue" />
                 <span>Compromiso y Fecha Estimada de Entrega</span>
               </h2>
-              <p className="text-xs text-slate-600 mt-0.5">
-                Define los plazos acordados con el cliente y confirma los antecedentes para generar la OT.
-              </p>
             </div>
 
             {/* Selector de Fecha y Hora Estimada de Entrega */}
@@ -1451,10 +1495,11 @@ export default function RecepcionWizardPage() {
                   name="fecha_estimada_entrega"
                   value={diagnosticData.fecha_estimada_entrega}
                   onChange={handleDiagnosticChange}
-                  className="w-full pl-10 pr-3.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl"
+                  onFocus={handleInputFocus}
+                  className="w-full pl-12 pr-3.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl"
                   required
                 />
-                <Calendar className="w-4 h-4 text-slate-600 absolute left-3.5 top-3.5 sm:top-3" />
+                <Calendar className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 sm:top-3 pointer-events-none" />
               </div>
             </div>
 
