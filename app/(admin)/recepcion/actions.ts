@@ -78,7 +78,7 @@ export async function registrarRecepcionVehiculo(
     // -------------------------------------------------------------
     // 2. REGISTRO O ACTUALIZACIÓN DEL CLIENTE (tabla: clientes)
     // -------------------------------------------------------------
-    let clienteId: number | string | null = null;
+    let clienteId: string | null = null;
 
     // Buscar si ya existe por rut_dni o por correo
     const { data: clienteExistente, error: searchClienteError } = await supabase
@@ -89,11 +89,11 @@ export async function registrarRecepcionVehiculo(
       .maybeSingle();
 
     if (searchClienteError && searchClienteError.code !== 'PGRST116') {
-      console.error('Error al buscar cliente:', searchClienteError);
+      console.warn('Aviso al buscar cliente:', searchClienteError.message);
     }
 
     if (clienteExistente?.id) {
-      clienteId = clienteExistente.id;
+      clienteId = String(clienteExistente.id);
       // Actualizar datos de contacto más recientes
       await supabase
         .from('clientes')
@@ -125,13 +125,13 @@ export async function registrarRecepcionVehiculo(
           error: `Error al registrar el cliente en base de datos: ${insertClienteError?.message || 'Fallo inesperado'}`,
         };
       }
-      clienteId = nuevoCliente.id;
+      clienteId = String(nuevoCliente.id);
     }
 
     // -------------------------------------------------------------
     // 3. REGISTRO O ACTUALIZACIÓN DEL VEHÍCULO (tabla: vehiculos)
     // -------------------------------------------------------------
-    let vehiculoId: number | string | null = null;
+    let vehiculoId: string | null = null;
 
     const { data: vehiculoExistente } = await supabase
       .from('vehiculos')
@@ -175,7 +175,7 @@ export async function registrarRecepcionVehiculo(
           error: `Error al registrar el vehículo: ${insertVehiculoError?.message || 'Fallo inesperado'}`,
         };
       }
-      vehiculoId = nuevoVehiculo.id;
+      vehiculoId = String(nuevoVehiculo.id);
     }
 
     // -------------------------------------------------------------
