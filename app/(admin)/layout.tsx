@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
@@ -49,63 +49,17 @@ const NAV_ITEMS: NavItem[] = [
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const [isInputFocused, setIsInputFocused] = useState(false);
 
-  // Detecta si el formulario de recepción está activo
+  // Detecta si el formulario de recepción está activo para ocultar la barra inferior por ruta
   const isFormActive = pathname === '/recepcion' || pathname?.startsWith('/recepcion');
   const isDashboard = pathname === '/';
-
-  // Ocultamiento dinámico de la navegación al enfocar cualquier input o textarea
-  useEffect(() => {
-    let blurTimeout: NodeJS.Timeout | null = null;
-
-    const handleFocus = (e: FocusEvent) => {
-      if (blurTimeout) {
-        clearTimeout(blurTimeout);
-        blurTimeout = null;
-      }
-      const target = e.target as HTMLElement | null;
-      if (
-        target &&
-        (target.tagName === 'INPUT' ||
-          target.tagName === 'TEXTAREA' ||
-          target.tagName === 'SELECT' ||
-          target.isContentEditable)
-      ) {
-        setIsInputFocused(true);
-        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        setTimeout(() => {
-          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 200);
-      }
-    };
-
-    const handleBlur = () => {
-      blurTimeout = setTimeout(() => {
-        setIsInputFocused(false);
-      }, 50);
-    };
-
-    window.addEventListener('focusin', handleFocus);
-    window.addEventListener('focusout', handleBlur);
-    window.addEventListener('focus', handleFocus, true);
-    window.addEventListener('blur', handleBlur, true);
-
-    return () => {
-      if (blurTimeout) clearTimeout(blurTimeout);
-      window.removeEventListener('focusin', handleFocus);
-      window.removeEventListener('focusout', handleBlur);
-      window.removeEventListener('focus', handleFocus, true);
-      window.removeEventListener('blur', handleBlur, true);
-    };
-  }, []);
 
   const handleLogout = () => {
     router.push('/');
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col md:flex-row antialiased selection:bg-visu-mint selection:text-slate-950 print:bg-white print:min-h-0 print:text-black">
+    <div className="min-h-[100dvh] bg-slate-50 text-slate-900 flex flex-col md:flex-row antialiased selection:bg-visu-mint selection:text-slate-950 print:bg-white print:min-h-0 print:text-black">
       {/* ============================================================ */}
       {/* 1. SIDEBAR ESCRITORIO (Fija a la izquierda en md/lg)          */}
       {/* ============================================================ */}
@@ -267,8 +221,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         {/* ============================================================ */}
         {/* 3. CONTENEDOR PRINCIPAL FLUIDO CON SAFE BOTTOM PADDING      */}
         {/* ============================================================ */}
-        <main className={`flex-1 w-full max-w-5xl mx-auto p-3.5 sm:p-6 md:p-8 overflow-x-hidden print:p-0 print:max-w-none print:m-0 print:overflow-visible print:w-full transition-[padding] duration-200 ${
-          isInputFocused ? 'pb-6 md:pb-8' : 'pb-28 md:pb-8'
+        <main className={`flex-1 w-full max-w-5xl mx-auto p-3.5 sm:p-6 md:p-8 overflow-x-hidden print:p-0 print:max-w-none print:m-0 print:overflow-visible print:w-full ${
+          isFormActive ? 'pb-8' : 'pb-28 md:pb-8'
         }`}>
           {children}
         </main>
@@ -280,7 +234,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       <nav
         aria-label="Navegación móvil inferior"
         className={`md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 z-40 px-3 py-1.5 items-center justify-around shadow-lg select-none print:hidden transition-all duration-300 ease-in-out ${
-          isInputFocused
+          isFormActive
             ? 'hidden'
             : 'flex'
         }`}

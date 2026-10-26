@@ -791,7 +791,7 @@ export default function RecepcionWizardPage() {
   // RENDER: WIZARD DE RECEPCIÓN MOBILE-FIRST
   // =========================================================================
   return (
-    <div className="w-full max-w-3xl mx-auto space-y-4 sm:space-y-6">
+    <div className="w-full max-w-3xl mx-auto space-y-4 sm:space-y-6 pb-40 sm:pb-8">
       {/* ------------------------------------------------------------- */}
       {/* 1. BARRA DE PROGRESO LINEAL COMPACTA & ENCABEZADO MÓVIL       */}
       {/* (Renderizado condicional a partir del Paso 2 para UX Móvil)   */}
