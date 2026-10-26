@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, useTransition } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { supabase } from '@/lib/supabaseClient';
 import { registrarRecepcionVehiculo } from './actions';
 import {
@@ -791,11 +792,68 @@ export default function RecepcionWizardPage() {
   // RENDER: WIZARD DE RECEPCIÓN MOBILE-FIRST
   // =========================================================================
   return (
-    <div className="w-full max-w-3xl mx-auto space-y-4 sm:space-y-6 pb-40 sm:pb-8">
-      {/* ------------------------------------------------------------- */}
-      {/* 1. BARRA DE PROGRESO LINEAL COMPACTA & ENCABEZADO MÓVIL       */}
-      {/* (Renderizado condicional a partir del Paso 2 para UX Móvil)   */}
-      {/* ------------------------------------------------------------- */}
+    <div className="min-h-[100dvh] flex flex-col bg-slate-50">
+      {/* ============================================================= */}
+      {/* HEADER FIJO COMPACTO: TÚNEL DE INMERSIÓN (STICKY HEADER)      */}
+      {/* ============================================================= */}
+      <header className="sticky top-0 bg-white z-50 flex justify-between items-center border-b border-slate-200 px-4 py-2">
+        {/* Lado izquierdo: Logo de Visú en formato pequeño */}
+        <div className="flex items-center gap-2">
+          <Link href="/recepcion" className="flex items-center">
+            <Image
+              src="/visu-logo.png"
+              alt="Visú"
+              width={85}
+              height={28}
+              priority
+              className="h-6 w-auto object-contain"
+            />
+          </Link>
+          <span className="text-[10px] font-bold text-visu-blue bg-visu-mint/20 border border-visu-mint/40 px-2 py-0.5 rounded-md">
+            Paso {currentStep}/5
+          </span>
+        </div>
+
+        {/* Lado derecho: Acción principal de avance compacto */}
+        <div className="flex items-center gap-2">
+          {currentStep < 5 ? (
+            <button
+              type="button"
+              onClick={handleNext}
+              className="px-3.5 py-1.5 rounded-lg bg-visu-mint hover:bg-visu-mint/90 active:bg-visu-mint-dark text-slate-950 font-bold text-xs sm:text-sm transition-all shadow-xs active:scale-95 cursor-pointer flex items-center gap-1.5"
+            >
+              <span>Continuar</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleSubmitFinal}
+              disabled={isPending}
+              className="px-3.5 py-1.5 rounded-lg bg-visu-mint hover:bg-visu-mint/90 active:bg-visu-mint-dark text-slate-950 font-bold text-xs sm:text-sm transition-all shadow-xs active:scale-95 disabled:opacity-60 cursor-pointer flex items-center gap-1.5"
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-950" />
+                  <span>Guardando...</span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-slate-950" />
+                  <span>Finalizar</span>
+                </>
+              )}
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* Contenedor del formulario con espaciado natural sin padding excesivo */}
+      <div className="flex-1 w-full max-w-3xl mx-auto p-3.5 sm:p-6 space-y-4 sm:space-y-6">
+        {/* ------------------------------------------------------------- */}
+        {/* 1. BARRA DE PROGRESO LINEAL COMPACTA & ENCABEZADO MÓVIL       */}
+        {/* (Renderizado condicional a partir del Paso 2 para UX Móvil)   */}
+        {/* ------------------------------------------------------------- */}
       {currentStep > 1 && (
         <div className="bg-white border border-slate-200 rounded-2xl p-3.5 sm:p-5 shadow-2xs">
           {/* Título & Badge de Paso */}
@@ -1600,6 +1658,7 @@ export default function RecepcionWizardPage() {
           )}
         </div>
       </div>
+    </div>
 
       {/* ============================================================= */}
       {/* MODAL LIGHTBOX PARA VER FOTO AMPLIADA EN CELULAR            */}

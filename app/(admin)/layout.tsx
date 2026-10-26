@@ -179,7 +179,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       {/* 2. HEADER SUPERIOR COMPACTO (Mobile & Desktop)              */}
       {/* ============================================================ */}
       <div className="flex-1 flex flex-col min-w-0 print:w-full print:block">
-        <header className={`h-14 md:h-16 bg-white border-b border-slate-200 px-4 md:px-8 flex items-center justify-between shadow-2xs print:hidden ${isDashboard ? 'hidden md:flex' : 'flex'}`}>
+        <header className={`h-14 md:h-16 bg-white border-b border-slate-200 px-4 md:px-8 flex items-center justify-between shadow-2xs print:hidden ${isFormActive ? 'hidden md:flex' : (isDashboard ? 'hidden md:flex' : 'flex')}`}>
           {/* Logo y Nombre en Móvil (Se oculta en móvil cuando el formulario está activo) */}
           <div className="flex items-center gap-2.5">
             <div className={`items-center ${isFormActive ? 'hidden md:flex' : 'flex md:hidden'}`}>
@@ -221,9 +221,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         {/* ============================================================ */}
         {/* 3. CONTENEDOR PRINCIPAL FLUIDO CON SAFE BOTTOM PADDING      */}
         {/* ============================================================ */}
-        <main className={`flex-1 w-full max-w-5xl mx-auto p-3.5 sm:p-6 md:p-8 overflow-x-hidden print:p-0 print:max-w-none print:m-0 print:overflow-visible print:w-full ${
-          isFormActive ? 'pb-8' : 'pb-28 md:pb-8'
-        }`}>
+        <main className={`flex-1 w-full max-w-5xl mx-auto ${
+          isFormActive ? 'p-0 sm:p-6 md:p-8' : 'p-3.5 sm:p-6 md:p-8 pb-28 md:pb-8'
+        } overflow-x-hidden print:p-0 print:max-w-none print:m-0 print:overflow-visible print:w-full`}>
           {children}
         </main>
       </div>
@@ -231,43 +231,41 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       {/* ============================================================ */}
       {/* 4. BARRA DE NAVEGACIÓN INFERIOR FIJA (BOTTOM BAR - MOBILE)  */}
       {/* ============================================================ */}
-      <nav
-        aria-label="Navegación móvil inferior"
-        className={`md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 z-40 px-3 py-1.5 items-center justify-around shadow-lg select-none print:hidden transition-all duration-300 ease-in-out ${
-          isFormActive
-            ? 'hidden'
-            : 'flex'
-        }`}
-        style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
-      >
-        {NAV_ITEMS.map((item) => {
-          const Icon = item.icon;
-          const isActive =
-            pathname === item.href ||
-            (item.href !== '/' && pathname?.startsWith(item.href));
+      {!isFormActive && (
+        <nav
+          aria-label="Navegación móvil inferior"
+          className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 z-40 px-3 py-1.5 flex items-center justify-around shadow-lg select-none print:hidden transition-all duration-300 ease-in-out"
+          style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
+        >
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const isActive =
+              pathname === item.href ||
+              (item.href !== '/' && pathname?.startsWith(item.href));
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex-1 flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all duration-150 active:scale-95 ${
-                isActive
-                  ? 'text-visu-blue font-bold'
-                  : 'text-slate-400 hover:text-slate-600 font-medium'
-              }`}
-            >
-              <div
-                className={`w-10 h-7 rounded-full flex items-center justify-center transition-colors mb-0.5 ${
-                  isActive ? 'text-visu-blue' : 'text-slate-400'
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex-1 flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all duration-150 active:scale-95 ${
+                  isActive
+                    ? 'text-visu-blue font-bold'
+                    : 'text-slate-400 hover:text-slate-600 font-medium'
                 }`}
               >
-                <Icon className="w-5 h-5" />
-              </div>
-              <span className="text-[11px] tracking-tight">{item.shortLabel}</span>
-            </Link>
-          );
-        })}
-      </nav>
+                <div
+                  className={`w-10 h-7 rounded-full flex items-center justify-center transition-colors mb-0.5 ${
+                    isActive ? 'text-visu-blue' : 'text-slate-400'
+                  }`}
+                >
+                  <Icon className="w-5 h-5" />
+                </div>
+                <span className="text-[11px] tracking-tight">{item.shortLabel}</span>
+              </Link>
+            );
+          })}
+        </nav>
+      )}
     </div>
   );
 }
