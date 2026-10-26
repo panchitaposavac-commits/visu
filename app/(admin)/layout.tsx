@@ -57,7 +57,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   // Ocultamiento dinámico de la navegación al enfocar cualquier input o textarea
   useEffect(() => {
-    const handleFocusIn = (e: FocusEvent) => {
+    let blurTimeout: NodeJS.Timeout | null = null;
+
+    const handleFocus = (e: FocusEvent) => {
+      if (blurTimeout) {
+        clearTimeout(blurTimeout);
+        blurTimeout = null;
+      }
       const target = e.target as HTMLElement | null;
       if (
         target &&
@@ -67,19 +73,30 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           target.isContentEditable)
       ) {
         setIsInputFocused(true);
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => {
+          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 200);
       }
     };
 
-    const handleFocusOut = () => {
-      setIsInputFocused(false);
+    const handleBlur = () => {
+      blurTimeout = setTimeout(() => {
+        setIsInputFocused(false);
+      }, 50);
     };
 
-    window.addEventListener('focusin', handleFocusIn);
-    window.addEventListener('focusout', handleFocusOut);
+    window.addEventListener('focusin', handleFocus);
+    window.addEventListener('focusout', handleBlur);
+    window.addEventListener('focus', handleFocus, true);
+    window.addEventListener('blur', handleBlur, true);
 
     return () => {
-      window.removeEventListener('focusin', handleFocusIn);
-      window.removeEventListener('focusout', handleFocusOut);
+      if (blurTimeout) clearTimeout(blurTimeout);
+      window.removeEventListener('focusin', handleFocus);
+      window.removeEventListener('focusout', handleBlur);
+      window.removeEventListener('focus', handleFocus, true);
+      window.removeEventListener('blur', handleBlur, true);
     };
   }, []);
 
@@ -208,7 +225,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       {/* 2. HEADER SUPERIOR COMPACTO (Mobile & Desktop)              */}
       {/* ============================================================ */}
       <div className="flex-1 flex flex-col min-w-0 print:w-full print:block">
-        <header className={`h-14 md:h-16 bg-white border-b border-slate-200 px-4 md:px-8 flex items-center justify-between sticky top-0 z-30 shadow-2xs print:hidden ${isDashboard ? 'hidden md:flex' : 'flex'}`}>
+        <header className={`h-14 md:h-16 bg-white border-b border-slate-200 px-4 md:px-8 flex items-center justify-between shadow-2xs print:hidden ${isDashboard ? 'hidden md:flex' : 'flex'}`}>
           {/* Logo y Nombre en Móvil (Se oculta en móvil cuando el formulario está activo) */}
           <div className="flex items-center gap-2.5">
             <div className={`items-center ${isFormActive ? 'hidden md:flex' : 'flex md:hidden'}`}>
@@ -262,10 +279,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       {/* ============================================================ */}
       <nav
         aria-label="Navegación móvil inferior"
-        className={`md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 z-40 px-3 py-1.5 flex items-center justify-around shadow-lg select-none print:hidden transition-all duration-300 ease-in-out ${
+        className={`md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 z-40 px-3 py-1.5 items-center justify-around shadow-lg select-none print:hidden transition-all duration-300 ease-in-out ${
           isInputFocused
-            ? 'translate-y-full opacity-0 pointer-events-none'
-            : 'translate-y-0 opacity-100'
+            ? 'hidden'
+            : 'flex'
         }`}
         style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
       >

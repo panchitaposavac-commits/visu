@@ -183,11 +183,12 @@ export default function RecepcionWizardPage() {
     }
   }, [diagnosticData.descripcion_cliente]);
 
-  // Posicionamiento suave del campo enfocado en la parte superior (evita tapado por teclado móvil)
+  // Auto-Scroll Inteligente (Centro de Pantalla) al enfocar cualquier campo
   const handleInputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
     setTimeout(() => {
-      e.target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 150);
+      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 200);
   };
 
   // Limpieza de reconocimiento de voz al desmontar
