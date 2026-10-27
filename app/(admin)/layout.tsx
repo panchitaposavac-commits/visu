@@ -50,8 +50,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Detecta si el formulario de recepción está activo para ocultar la barra inferior por ruta
-  const isFormActive = pathname === '/recepcion' || pathname?.startsWith('/recepcion');
+  // Túnel de inmersión: oculta la barra inferior en recepción y rutas de edición interna (ejecutar, hallazgos, presupuesto)
+  const isReception = pathname === '/recepcion' || pathname?.startsWith('/recepcion');
+  const isEditingFlow =
+    isReception ||
+    pathname?.includes('/ejecutar') ||
+    pathname?.includes('/hallazgos') ||
+    pathname?.includes('/presupuesto');
   const isDashboard = pathname === '/';
 
   const handleLogout = () => {
@@ -179,10 +184,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       {/* 2. HEADER SUPERIOR COMPACTO (Mobile & Desktop)              */}
       {/* ============================================================ */}
       <div className="flex-1 flex flex-col min-w-0 print:w-full print:block">
-        <header className={`h-14 md:h-16 bg-white border-b border-slate-200 px-4 md:px-8 flex items-center justify-between shadow-2xs print:hidden ${isFormActive ? 'hidden md:flex' : (isDashboard ? 'hidden md:flex' : 'flex')}`}>
-          {/* Logo y Nombre en Móvil (Se oculta en móvil cuando el formulario está activo) */}
+        <header className={`h-14 md:h-16 bg-white border-b border-slate-200 px-4 md:px-8 flex items-center justify-between shadow-2xs print:hidden ${isReception ? 'hidden md:flex' : (isDashboard ? 'hidden md:flex' : 'flex')}`}>
+          {/* Logo y Nombre en Móvil (Se oculta en móvil cuando el formulario de recepción está activo) */}
           <div className="flex items-center gap-2.5">
-            <div className={`items-center ${isFormActive ? 'hidden md:flex' : 'flex md:hidden'}`}>
+            <div className={`items-center ${isReception ? 'hidden md:flex' : 'flex md:hidden'}`}>
               <Link href="/recepcion" className="flex items-center gap-2">
                 <Image
                   src="/visu-logo.png"
@@ -194,14 +199,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 />
               </Link>
             </div>
-            <span className={`text-[10px] font-bold uppercase tracking-wider bg-visu-mint/20 text-visu-blue px-2 py-0.5 rounded border border-visu-mint/40 ${isFormActive ? 'hidden md:inline-block' : 'hidden sm:inline-block'}`}>
+            <span className={`text-[10px] font-bold uppercase tracking-wider bg-visu-mint/20 text-visu-blue px-2 py-0.5 rounded border border-visu-mint/40 ${isReception ? 'hidden md:inline-block' : 'hidden sm:inline-block'}`}>
               Terreno
             </span>
           </div>
 
-          {/* Estado de Conexión & Salida (Banner 'En Línea' se oculta en móvil con hidden md:flex cuando el form está activo) */}
+          {/* Estado de Conexión & Salida (Banner 'En Línea' se oculta en móvil con hidden md:flex cuando recepción está activa) */}
           <div className="flex items-center gap-3">
-            <div className={`items-center gap-2 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200 ${isFormActive ? 'hidden md:flex' : 'flex'}`}>
+            <div className={`items-center gap-2 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200 ${isReception ? 'hidden md:flex' : 'flex'}`}>
               <span className="w-2 h-2 rounded-full bg-visu-mint animate-pulse"></span>
               <span className="text-xs font-semibold text-slate-700 hidden sm:inline">En Línea</span>
               <ShieldCheck className="w-3.5 h-3.5 text-visu-mint sm:hidden" />
@@ -222,7 +227,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         {/* 3. CONTENEDOR PRINCIPAL FLUIDO CON SAFE BOTTOM PADDING      */}
         {/* ============================================================ */}
         <main className={`flex-1 w-full max-w-5xl mx-auto ${
-          isFormActive ? 'p-0 sm:p-6 md:p-8' : 'p-3.5 sm:p-6 md:p-8 pb-28 md:pb-8'
+          isReception
+            ? 'p-0 sm:p-6 md:p-8'
+            : isEditingFlow
+            ? 'p-3.5 sm:p-6 md:p-8 pb-8'
+            : 'p-3.5 sm:p-6 md:p-8 pb-28 md:pb-8'
         } overflow-x-hidden print:p-0 print:max-w-none print:m-0 print:overflow-visible print:w-full`}>
           {children}
         </main>
@@ -231,7 +240,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       {/* ============================================================ */}
       {/* 4. BARRA DE NAVEGACIÓN INFERIOR FIJA (BOTTOM BAR - MOBILE)  */}
       {/* ============================================================ */}
-      {!isFormActive && (
+      {!isEditingFlow && (
         <nav
           aria-label="Navegación móvil inferior"
           className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 z-40 px-3 py-1.5 flex items-center justify-around shadow-lg select-none print:hidden transition-all duration-300 ease-in-out"

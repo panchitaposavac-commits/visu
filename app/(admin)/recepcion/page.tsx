@@ -651,7 +651,7 @@ export default function RecepcionWizardPage() {
     const ordenId = successResult.orden_id;
 
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-    const urlOT = `${baseUrl}/ordenes/${ordenId}`;
+    const urlOT = `${baseUrl}/informe/${ordenId}`;
 
     const mensajeWhatsApp = `Hola *${nombreCliente}*, confirmamos el ingreso de tu vehículo *${marcaModelo}* (Patente: *${patente}*) a taller Visú bajo la orden *${numOT}*. Puedes revisar el informe oficial de recepción, diagnóstico inicial y registro fotográfico en el siguiente enlace:\n\n${urlOT}`;
 
