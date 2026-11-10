@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, use } from 'react';
+import React, { useEffect, useState, use } from 'react';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
@@ -197,17 +197,13 @@ function formatearPesos(val?: number | string | null): string {
 }
 
 interface PageProps {
-  params?: Promise<{ id: string }> | { id: string };
+  params: Promise<{ id: string }>;
 }
 
-export default function InformePublicoClientePage(props: PageProps) {
+export default function InformePublicoClientePage({ params }: PageProps) {
   const routeParams = useParams();
-  const unwrappedParams = props?.params
-    ? typeof (props.params as Promise<{ id: string }>).then === 'function'
-      ? use(props.params as Promise<{ id: string }>)
-      : (props.params as { id: string })
-    : null;
-  const rawId = (unwrappedParams?.id || routeParams?.id) as string;
+  const unwrappedParams = use(params);
+  const rawId = unwrappedParams.id || (routeParams?.id as string);
 
   const [orden, setOrden] = useState<OrdenDetalle | null>(null);
   const [evidencias, setEvidencias] = useState<EvidenciaDetalle[]>([]);
@@ -216,112 +212,125 @@ export default function InformePublicoClientePage(props: PageProps) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
 
-  const fetchDetalleOrden = useCallback(async () => {
-    if (!rawId) return;
-
-    try {
-      setLoading(true);
-      setErrorMsg(null);
-
-      // 1. Consultar Orden de Trabajo con Clientes y Vehículos relacionados
-      let query = supabase
-        .from('ordenes_trabajo')
-        .select(`
-          *,
-          clientes:cliente_id (
-            id,
-            nombre,
-            apellido,
-            rut_dni,
-            correo,
-            telefono
-          ),
-          vehiculos:vehiculo_id (
-            id,
-            patente,
-            marca,
-            modelo,
-            anio,
-            kilometraje,
-            color
-          )
-        `);
-
-      const numericId = Number(rawId);
-      if (!isNaN(numericId)) {
-        query = query.or(`id.eq.${numericId},numero_ot.eq.${numericId}`);
-      } else {
-        query = query.eq('id', rawId);
-      }
-
-      const { data: ordenData, error: ordenErr } = await query.maybeSingle();
-
-      if (ordenErr) {
-        console.error('Error al consultar orden:', ordenErr);
-        setErrorMsg('No fue posible cargar el informe en este momento.');
-        setLoading(false);
-        return;
-      }
-
-      if (!ordenData) {
-        setErrorMsg('El informe solicitado no existe o no se encuentra disponible.');
-        setLoading(false);
-        return;
-      }
-
-      const clienteObj = Array.isArray(ordenData.clientes)
-        ? ordenData.clientes[0] || null
-        : ordenData.clientes;
-
-      const vehiculoObj = Array.isArray(ordenData.vehiculos)
-        ? ordenData.vehiculos[0] || null
-        : ordenData.vehiculos;
-
-      const ordenFormateada: OrdenDetalle = {
-        ...ordenData,
-        clientes: clienteObj,
-        vehiculos: vehiculoObj,
-      };
-
-      setOrden(ordenFormateada);
-
-      const actualOrdenId = ordenData.id;
-
-      // 2. Consultar Evidencias Fotográficas
-      const { data: evidenciasData } = await supabase
-        .from('evidencias_orden')
-        .select('*')
-        .eq('orden_trabajo_id', actualOrdenId)
-        .order('id', { ascending: true });
-
-      if (evidenciasData) {
-        const fotosRecepcion = evidenciasData.filter(
-          (ev: EvidenciaDetalle) => !ev.etapa || ev.etapa.toLowerCase() === 'recepcion'
-        );
-        setEvidencias(fotosRecepcion.length > 0 ? fotosRecepcion : evidenciasData);
-      }
-
-      // 3. Consultar Hallazgos Técnicos y Presupuesto
-      const { data: hallazgosData } = await supabase
-        .from('hallazgos_ot')
-        .select('*')
-        .eq('orden_trabajo_id', actualOrdenId)
-        .order('id', { ascending: true });
-
-      if (hallazgosData) {
-        setHallazgos(hallazgosData);
-      }
-    } catch (err: unknown) {
-      console.error('Error no controlado cargando informe:', err);
-      setErrorMsg('Ocurrió un error inesperado al procesar la solicitud.');
-    } finally {
-      setLoading(false);
-    }
-  }, [rawId]);
-
   useEffect(() => {
-    fetchDetalleOrden();
-  }, [fetchDetalleOrden]);
+    let ignore = false;
+
+    async function loadData() {
+      if (!rawId) return;
+
+      try {
+        // 1. Consultar Orden de Trabajo con Clientes y Vehículos relacionados
+        let query = supabase
+          .from('ordenes_trabajo')
+          .select(`
+            *,
+            clientes:cliente_id (
+              id,
+              nombre,
+              apellido,
+              rut_dni,
+              correo,
+              telefono
+            ),
+            vehiculos:vehiculo_id (
+              id,
+              patente,
+              marca,
+              modelo,
+              anio,
+              kilometraje,
+              color
+            )
+          `);
+
+        const numericId = Number(rawId);
+        if (!isNaN(numericId)) {
+          query = query.or(`id.eq.${numericId},numero_ot.eq.${numericId}`);
+        } else {
+          query = query.eq('id', rawId);
+        }
+
+        const { data: ordenData, error: ordenErr } = await query.maybeSingle();
+
+        if (ignore) return;
+
+        if (ordenErr) {
+          console.error('Error al consultar orden:', ordenErr);
+          setErrorMsg('No fue posible cargar el informe en este momento.');
+          setLoading(false);
+          return;
+        }
+
+        if (!ordenData) {
+          setErrorMsg('El informe solicitado no existe o no se encuentra disponible.');
+          setLoading(false);
+          return;
+        }
+
+        const clienteObj = Array.isArray(ordenData.clientes)
+          ? ordenData.clientes[0] || null
+          : ordenData.clientes;
+
+        const vehiculoObj = Array.isArray(ordenData.vehiculos)
+          ? ordenData.vehiculos[0] || null
+          : ordenData.vehiculos;
+
+        const ordenFormateada: OrdenDetalle = {
+          ...ordenData,
+          clientes: clienteObj,
+          vehiculos: vehiculoObj,
+        };
+
+        setOrden(ordenFormateada);
+
+        const actualOrdenId = ordenData.id;
+
+        // 2. Consultar Evidencias Fotográficas
+        const { data: evidenciasData } = await supabase
+          .from('evidencias_orden')
+          .select('*')
+          .eq('orden_trabajo_id', actualOrdenId)
+          .order('id', { ascending: true });
+
+        if (ignore) return;
+
+        if (evidenciasData) {
+          const fotosRecepcion = evidenciasData.filter(
+            (ev: EvidenciaDetalle) => !ev.etapa || ev.etapa.toLowerCase() === 'recepcion'
+          );
+          setEvidencias(fotosRecepcion.length > 0 ? fotosRecepcion : evidenciasData);
+        }
+
+        // 3. Consultar Hallazgos Técnicos y Presupuesto
+        const { data: hallazgosData } = await supabase
+          .from('hallazgos_ot')
+          .select('*')
+          .eq('orden_trabajo_id', actualOrdenId)
+          .order('id', { ascending: true });
+
+        if (ignore) return;
+
+        if (hallazgosData) {
+          setHallazgos(hallazgosData);
+        }
+      } catch (err: unknown) {
+        if (!ignore) {
+          console.error('Error no controlado cargando informe:', err);
+          setErrorMsg('Ocurrió un error inesperado al procesar la solicitud.');
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadData();
+
+    return () => {
+      ignore = true;
+    };
+  }, [rawId]);
 
   const handlePrint = () => {
     if (typeof window !== 'undefined') {

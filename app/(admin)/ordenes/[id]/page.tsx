@@ -203,18 +203,14 @@ function formatearPesos(val?: number | string | null): string {
 }
 
 interface PageProps {
-  params?: Promise<{ id: string }> | { id: string };
+  params: Promise<{ id: string }>;
 }
 
-export default function DetalleOrdenPage(props: PageProps) {
+export default function DetalleOrdenPage({ params }: PageProps) {
   // Soporte universal para params en Next.js App Router
   const routeParams = useParams();
-  const unwrappedParams = props?.params
-    ? typeof (props.params as Promise<{ id: string }>).then === 'function'
-      ? use(props.params as Promise<{ id: string }>)
-      : (props.params as { id: string })
-    : null;
-  const rawId = (unwrappedParams?.id || routeParams?.id) as string;
+  const unwrappedParams = use(params);
+  const rawId = unwrappedParams.id || (routeParams?.id as string);
 
   const router = useRouter();
   const [orden, setOrden] = useState<OrdenDetalle | null>(null);

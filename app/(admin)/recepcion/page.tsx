@@ -120,10 +120,20 @@ export default function RecepcionWizardPage() {
   // -----------------------------------------------------------------------
   // ESTADOS DEL FORMULARIO
   // -----------------------------------------------------------------------
-  const [diagnosticData, setDiagnosticData] = useState<DiagnosticFormData>({
-    tipo_servicio: 'mantencion',
-    descripcion_cliente: '',
-    fecha_estimada_entrega: '',
+  const [diagnosticData, setDiagnosticData] = useState<DiagnosticFormData>(() => {
+    let initialTipo: TipoServicio = 'mantencion';
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const s = params.get('servicio');
+      if (s === 'mantencion' || s === 'reparacion') {
+        initialTipo = s as TipoServicio;
+      }
+    }
+    return {
+      tipo_servicio: initialTipo,
+      descripcion_cliente: '',
+      fecha_estimada_entrega: '',
+    };
   });
 
   const [clientData, setClientData] = useState<ClientFormData>({
@@ -205,16 +215,6 @@ export default function RecepcionWizardPage() {
     };
   }, []);
 
-  // Preselección de servicio desde URL (?servicio=mantencion / ?servicio=reparacion)
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const s = params.get('servicio');
-      if (s === 'mantencion' || s === 'reparacion') {
-        setDiagnosticData((prev) => ({ ...prev, tipo_servicio: s as TipoServicio }));
-      }
-    }
-  }, []);
 
   // Manejador de Dictado por Voz (Speech-to-Text)
   const handleToggleListening = () => {

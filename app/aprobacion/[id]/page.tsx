@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, use } from 'react';
+import React, { useEffect, useState, use } from 'react';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
@@ -11,7 +11,6 @@ import {
   Printer,
   RefreshCw,
   AlertCircle,
-  FileText,
   Camera,
   Maximize2,
   X,
@@ -20,10 +19,8 @@ import {
   CheckCircle2,
   Clock,
   MessageSquare,
-  ArrowRight,
   Check,
   XCircle,
-  Phone,
 } from 'lucide-react';
 import { type EstadoOrden } from '@/types/visu';
 
@@ -184,17 +181,13 @@ function formatearPesos(val?: number | string | null): string {
 }
 
 interface PageProps {
-  params?: Promise<{ id: string }> | { id: string };
+  params: Promise<{ id: string }>;
 }
 
-export default function AprobacionPublicaPresupuestoPage(props: PageProps) {
+export default function AprobacionPublicaPresupuestoPage({ params }: PageProps) {
   const routeParams = useParams();
-  const unwrappedParams = props?.params
-    ? typeof (props.params as Promise<{ id: string }>).then === 'function'
-      ? use(props.params as Promise<{ id: string }>)
-      : (props.params as { id: string })
-    : null;
-  const rawId = (unwrappedParams?.id || routeParams?.id) as string;
+  const unwrappedParams = use(params);
+  const rawId = unwrappedParams.id || (routeParams?.id as string);
 
   const [orden, setOrden] = useState<OrdenDetalle | null>(null);
   const [hallazgos, setHallazgos] = useState<HallazgoDetalle[]>([]);
@@ -204,112 +197,122 @@ export default function AprobacionPublicaPresupuestoPage(props: PageProps) {
   // Estados de la transacción de aprobación
   const [updating, setUpdating] = useState<boolean>(false);
   const [actionSuccess, setActionSuccess] = useState<'aprobado' | 'cambios' | null>(null);
-  const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
 
   // Modal Lightbox para fotos
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
 
-  const fetchDetallePresupuesto = useCallback(async () => {
-    if (!rawId) return;
-
-    try {
-      setLoading(true);
-      setErrorMsg(null);
-
-      // 1. Consultar Orden de Trabajo con Cliente y Vehículo
-      let query = supabase
-        .from('ordenes_trabajo')
-        .select(`
-          *,
-          clientes:cliente_id (
-            id,
-            nombre,
-            apellido,
-            rut_dni,
-            correo,
-            telefono
-          ),
-          vehiculos:vehiculo_id (
-            id,
-            patente,
-            marca,
-            modelo,
-            anio,
-            kilometraje,
-            color
-          )
-        `);
-
-      const numericId = Number(rawId);
-      if (!isNaN(numericId)) {
-        query = query.or(`id.eq.${numericId},numero_ot.eq.${numericId}`);
-      } else {
-        query = query.eq('id', rawId);
-      }
-
-      const { data: ordenData, error: ordenErr } = await query.maybeSingle();
-
-      if (ordenErr) {
-        console.error('Error consultando orden para aprobación:', ordenErr);
-        setErrorMsg('No fue posible cargar el presupuesto en este momento.');
-        setLoading(false);
-        return;
-      }
-
-      if (!ordenData) {
-        setErrorMsg('El presupuesto solicitado no existe o no se encuentra disponible.');
-        setLoading(false);
-        return;
-      }
-
-      const clienteObj = Array.isArray(ordenData.clientes)
-        ? ordenData.clientes[0] || null
-        : ordenData.clientes;
-
-      const vehiculoObj = Array.isArray(ordenData.vehiculos)
-        ? ordenData.vehiculos[0] || null
-        : ordenData.vehiculos;
-
-      const ordenFormateada: OrdenDetalle = {
-        ...ordenData,
-        clientes: clienteObj,
-        vehiculos: vehiculoObj,
-      };
-
-      setOrden(ordenFormateada);
-
-      // Si la orden ya está en estado en_reparacion, reflejar éxito previo
-      if (ordenData.estado === 'en_reparacion' || ordenData.estado === 'en_proceso') {
-        setActionSuccess('aprobado');
-      } else if (ordenData.estado === 'en_revision') {
-        setActionSuccess('cambios');
-      }
-
-      const actualOrdenId = ordenData.id;
-
-      // 2. Consultar Hallazgos Técnicos y Presupuestos
-      const { data: hallazgosData, error: hallazgosErr } = await supabase
-        .from('hallazgos_ot')
-        .select('*')
-        .eq('orden_trabajo_id', actualOrdenId)
-        .order('id', { ascending: true });
-
-      if (hallazgosErr) {
-        console.error('Error consultando hallazgos:', hallazgosErr);
-      } else if (hallazgosData) {
-        setHallazgos(hallazgosData);
-      }
-    } catch (err: unknown) {
-      console.error('Error no controlado cargando presupuesto:', err);
-      setErrorMsg('Ocurrió un error inesperado al procesar la solicitud.');
-    } finally {
-      setLoading(false);
-    }
-  }, [rawId]);
-
   useEffect(() => {
-    fetchDetallePresupuesto();
-  }, [fetchDetallePresupuesto]);
+    let ignore = false;
+
+    async function loadData() {
+      if (!rawId) return;
+
+      try {
+        // 1. Consultar Orden de Trabajo con Cliente y Vehículo
+        let query = supabase
+          .from('ordenes_trabajo')
+          .select(`
+            *,
+            clientes:cliente_id (
+              id,
+              nombre,
+              apellido,
+              rut_dni,
+              correo,
+              telefono
+            ),
+            vehiculos:vehiculo_id (
+              id,
+              patente,
+              marca,
+              modelo,
+              anio,
+              kilometraje,
+              color
+            )
+          `);
+
+        const numericId = Number(rawId);
+        if (!isNaN(numericId)) {
+          query = query.or(`id.eq.${numericId},numero_ot.eq.${numericId}`);
+        } else {
+          query = query.eq('id', rawId);
+        }
+
+        const { data: ordenData, error: ordenErr } = await query.maybeSingle();
+
+        if (ignore) return;
+
+        if (ordenErr) {
+          console.error('Error consultando orden para aprobación:', ordenErr);
+          setErrorMsg('No fue posible cargar el presupuesto en este momento.');
+          setLoading(false);
+          return;
+        }
+
+        if (!ordenData) {
+          setErrorMsg('El presupuesto solicitado no existe o no se encuentra disponible.');
+          setLoading(false);
+          return;
+        }
+
+        const clienteObj = Array.isArray(ordenData.clientes)
+          ? ordenData.clientes[0] || null
+          : ordenData.clientes;
+
+        const vehiculoObj = Array.isArray(ordenData.vehiculos)
+          ? ordenData.vehiculos[0] || null
+          : ordenData.vehiculos;
+
+        const ordenFormateada: OrdenDetalle = {
+          ...ordenData,
+          clientes: clienteObj,
+          vehiculos: vehiculoObj,
+        };
+
+        setOrden(ordenFormateada);
+
+        // Si la orden ya está en estado en_reparacion, reflejar éxito previo
+        if (ordenData.estado === 'en_reparacion' || ordenData.estado === 'en_proceso') {
+          setActionSuccess('aprobado');
+        } else if (ordenData.estado === 'en_revision') {
+          setActionSuccess('cambios');
+        }
+
+        const actualOrdenId = ordenData.id;
+
+        // 2. Consultar Hallazgos Técnicos y Presupuestos
+        const { data: hallazgosData, error: hallazgosErr } = await supabase
+          .from('hallazgos_ot')
+          .select('*')
+          .eq('orden_trabajo_id', actualOrdenId)
+          .order('id', { ascending: true });
+
+        if (ignore) return;
+
+        if (hallazgosErr) {
+          console.error('Error consultando hallazgos:', hallazgosErr);
+        } else if (hallazgosData) {
+          setHallazgos(hallazgosData);
+        }
+      } catch (err: unknown) {
+        if (!ignore) {
+          console.error('Error no controlado cargando presupuesto:', err);
+          setErrorMsg('Ocurrió un error inesperado al procesar la solicitud.');
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadData();
+
+    return () => {
+      ignore = true;
+    };
+  }, [rawId]);
 
   // =========================================================================
   // TRANSACCIÓN SUPABASE: APROBACIÓN O SOLICITUD DE CAMBIOS
@@ -319,7 +322,6 @@ export default function AprobacionPublicaPresupuestoPage(props: PageProps) {
 
     try {
       setUpdating(true);
-      setFeedbackMsg(null);
 
       const { error } = await supabase
         .from('ordenes_trabajo')
@@ -333,7 +335,6 @@ export default function AprobacionPublicaPresupuestoPage(props: PageProps) {
 
       setOrden((prev) => (prev ? { ...prev, estado: 'en_reparacion' } : null));
       setActionSuccess('aprobado');
-      setFeedbackMsg('¡Presupuesto Aprobado con Éxito! El taller ha sido notificado.');
 
       // Scroll suave a la cabecera
       if (typeof window !== 'undefined') {
@@ -358,7 +359,6 @@ export default function AprobacionPublicaPresupuestoPage(props: PageProps) {
 
     try {
       setUpdating(true);
-      setFeedbackMsg(null);
 
       const { error } = await supabase
         .from('ordenes_trabajo')
@@ -372,7 +372,6 @@ export default function AprobacionPublicaPresupuestoPage(props: PageProps) {
 
       setOrden((prev) => (prev ? { ...prev, estado: 'en_revision' } : null));
       setActionSuccess('cambios');
-      setFeedbackMsg('Solicitud enviada: Tu orden está en revisión técnica.');
 
       if (typeof window !== 'undefined') {
         window.scrollTo({ top: 0, behavior: 'smooth' });

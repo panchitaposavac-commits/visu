@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 import {
@@ -77,75 +77,89 @@ export default function DashboardInicioPage() {
   });
   const [loading, setLoading] = useState<boolean>(true);
 
-  const cargarDashboard = useCallback(async () => {
-    try {
-      // 1. Obtener los últimos 5 registros de ordenes_trabajo con vehículos
-      const { data: ordenesData, error: ordenesError } = await supabase
-        .from('ordenes_trabajo')
-        .select(`
-          id,
-          numero_ot,
-          estado,
-          tipo_servicio,
-          creado_el,
-          vehiculos:vehiculo_id (
-            patente,
-            marca,
-            modelo
-          )
-        `)
-        .order('creado_el', { ascending: false })
-        .limit(5);
-
-      if (ordenesError) {
-        console.error('Error al cargar órdenes recientes:', ordenesError);
-      } else if (ordenesData) {
-        const formatted: RecienteItem[] = (ordenesData as unknown as Array<{
-          id: string;
-          numero_ot: number;
-          estado: string;
-          tipo_servicio: string;
-          creado_el: string;
-          vehiculos: VehiculoRel | VehiculoRel[] | null;
-        }>).map((item) => ({
-          id: item.id,
-          numero_ot: item.numero_ot,
-          estado: item.estado,
-          tipo_servicio: item.tipo_servicio,
-          creado_el: item.creado_el,
-          vehiculos: Array.isArray(item.vehiculos) ? item.vehiculos[0] : item.vehiculos,
-        }));
-        setRecientes(formatted);
-      }
-
-      // 2. Obtener métricas de órdenes
-      const { data: allData, error: allError } = await supabase
-        .from('ordenes_trabajo')
-        .select('id, estado');
-
-      if (!allError && allData) {
-        const total = allData.length;
-        const aprobadosCount = allData.filter((o) =>
-          ['en_proceso', 'en_reparacion', 'listo', 'entregado'].includes(o.estado)
-        ).length;
-        const convRate = total > 0 ? Math.round((aprobadosCount / total) * 100) : 0;
-
-        setMetrics({
-          enviados: total,
-          aprobados: aprobadosCount,
-          conversion: convRate,
-        });
-      }
-    } catch (err) {
-      console.error('Error general cargando dashboard:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
+    let ignore = false;
+
+    async function cargarDashboard() {
+      try {
+        // 1. Obtener los últimos 5 registros de ordenes_trabajo con vehículos
+        const { data: ordenesData, error: ordenesError } = await supabase
+          .from('ordenes_trabajo')
+          .select(`
+            id,
+            numero_ot,
+            estado,
+            tipo_servicio,
+            creado_el,
+            vehiculos:vehiculo_id (
+              patente,
+              marca,
+              modelo
+            )
+          `)
+          .order('creado_el', { ascending: false })
+          .limit(5);
+
+        if (!ignore) {
+          if (ordenesError) {
+            console.error('Error al cargar órdenes recientes:', ordenesError);
+          } else if (ordenesData) {
+            const formatted: RecienteItem[] = (ordenesData as unknown as Array<{
+              id: string;
+              numero_ot: number;
+              estado: string;
+              tipo_servicio: string;
+              creado_el: string;
+              vehiculos: VehiculoRel | VehiculoRel[] | null;
+            }>).map((item) => ({
+              id: item.id,
+              numero_ot: item.numero_ot,
+              estado: item.estado,
+              tipo_servicio: item.tipo_servicio,
+              creado_el: item.creado_el,
+              vehiculos: Array.isArray(item.vehiculos) ? item.vehiculos[0] : item.vehiculos,
+            }));
+            setRecientes(formatted);
+          }
+        }
+
+        // 2. Obtener métricas de órdenes
+        const { data: allData, error: allError } = await supabase
+          .from('ordenes_trabajo')
+          .select('id, estado');
+
+        if (!ignore) {
+          if (!allError && allData) {
+            const total = allData.length;
+            const aprobadosCount = allData.filter((o) =>
+              ['en_proceso', 'en_reparacion', 'listo', 'entregado'].includes(o.estado)
+            ).length;
+            const convRate = total > 0 ? Math.round((aprobadosCount / total) * 100) : 0;
+
+            setMetrics({
+              enviados: total,
+              aprobados: aprobadosCount,
+              conversion: convRate,
+            });
+          }
+        }
+      } catch (err) {
+        if (!ignore) {
+          console.error('Error general cargando dashboard:', err);
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    }
+
     cargarDashboard();
-  }, [cargarDashboard]);
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   return (
     <div className="w-full max-w-xl mx-auto space-y-4 sm:space-y-6 antialiased">

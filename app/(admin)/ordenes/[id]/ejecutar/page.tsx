@@ -95,7 +95,7 @@ interface OrdenResumen {
 }
 
 interface PageProps {
-  params?: Promise<{ id: string }> | { id: string };
+  params: Promise<{ id: string }>;
 }
 
 // Helper para formateo de pesos chilenos
@@ -103,15 +103,11 @@ function formatearPesos(monto: number): string {
   return `$ ${Math.round(monto).toLocaleString('es-CL')}`;
 }
 
-export default function EjecutarReparacionPage(props: PageProps) {
+export default function EjecutarReparacionPage({ params }: PageProps) {
   const router = useRouter();
   const routeParams = useParams();
-  const unwrappedParams = props?.params
-    ? typeof (props.params as Promise<{ id: string }>).then === 'function'
-      ? use(props.params as Promise<{ id: string }>)
-      : (props.params as { id: string })
-    : null;
-  const rawId = (unwrappedParams?.id || routeParams?.id) as string;
+  const unwrappedParams = use(params);
+  const rawId = unwrappedParams.id || (routeParams?.id as string);
 
   // Estado del Wizard (Paso 1: Hallazgos, Paso 2: Valorización)
   const [paso, setPaso] = useState<1 | 2>(1);
