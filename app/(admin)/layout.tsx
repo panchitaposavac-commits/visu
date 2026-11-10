@@ -9,7 +9,6 @@ import {
   Plus,
   ClipboardList,
   LogOut,
-  ShieldCheck,
   Sparkles,
 } from 'lucide-react';
 
@@ -57,7 +56,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     pathname?.includes('/ejecutar') ||
     pathname?.includes('/hallazgos') ||
     pathname?.includes('/presupuesto');
-  const isDashboard = pathname === '/';
 
   const handleLogout = () => {
     router.push('/');
@@ -71,7 +69,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       <aside className="hidden md:flex md:w-64 lg:w-72 flex-col bg-visu-blue text-white border-r border-blue-900/50 shrink-0 select-none print:hidden shadow-xl">
         {/* Header de la Sidebar con Logo Oficial */}
         <div className="h-16 px-6 flex items-center justify-between border-b border-white/10">
-          <Link href="/recepcion" className="flex items-center gap-2 transition-opacity hover:opacity-90">
+          <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-90">
             <Image
               src="/visu-logo-white.png"
               alt="Visú"
@@ -181,44 +179,58 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       </aside>
 
       {/* ============================================================ */}
-      {/* 2. HEADER SUPERIOR COMPACTO (Mobile & Desktop)              */}
+      {/* 2. ÁREA DE CONTENIDO CON CABECERAS MÓVIL Y ESCRITORIO        */}
       {/* ============================================================ */}
       <div className="flex-1 flex flex-col min-w-0 print:w-full print:block">
-        <header className={`h-14 md:h-16 bg-white border-b border-slate-200 px-4 md:px-8 flex items-center justify-between shadow-2xs print:hidden ${isReception ? 'hidden md:flex' : (isDashboard ? 'hidden md:flex' : 'flex')}`}>
-          {/* Logo y Nombre en Móvil (Se oculta en móvil cuando el formulario de recepción está activo) */}
-          <div className="flex items-center gap-2.5">
-            <div className={`items-center ${isReception ? 'hidden md:flex' : 'flex md:hidden'}`}>
-              <Link href="/recepcion" className="flex items-center gap-2">
-                <Image
-                  src="/visu-logo.png"
-                  alt="Visú"
-                  width={110}
-                  height={40}
-                  priority
-                  className="h-7 w-auto object-contain"
-                />
-              </Link>
+        {/* Cabecera Superior Móvil (md:hidden) */}
+        {!isReception && (
+          <header className="md:hidden sticky top-0 z-30 bg-visu-blue text-white h-12 px-4 flex items-center justify-between shadow-xs select-none print:hidden">
+            {/* Logo Visú a la izquierda */}
+            <Link href="/" className="flex items-center gap-2 active:opacity-80 transition-opacity">
+              <Image
+                src="/visu-logo-white.png"
+                alt="Visú"
+                width={96}
+                height={32}
+                priority
+                className="h-6 w-auto object-contain"
+              />
+            </Link>
+
+            {/* Identificación de Plan / Taller a la derecha */}
+            <div className="flex items-center">
+              <span className="text-[10px] font-bold tracking-wider uppercase bg-visu-mint text-slate-950 px-2 py-0.5 rounded shadow-xs">
+                Taller Pro
+              </span>
             </div>
-            <span className={`text-[10px] font-bold uppercase tracking-wider bg-visu-mint/20 text-visu-blue px-2 py-0.5 rounded border border-visu-mint/40 ${isReception ? 'hidden md:inline-block' : 'hidden sm:inline-block'}`}>
-              Terreno
+          </header>
+        )}
+
+        {/* Header Superior Escritorio (hidden md:flex) */}
+        <header
+          className={`hidden md:flex h-16 bg-white border-b border-slate-200 px-8 items-center justify-between shadow-2xs print:hidden ${
+            isReception ? 'md:hidden' : ''
+          }`}
+        >
+          <div className="flex items-center gap-2.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider bg-visu-mint/20 text-visu-blue px-2.5 py-1 rounded border border-visu-mint/40">
+              Modo Taller
             </span>
           </div>
 
-          {/* Estado de Conexión & Salida (Banner 'En Línea' se oculta en móvil con hidden md:flex cuando recepción está activa) */}
           <div className="flex items-center gap-3">
-            <div className={`items-center gap-2 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200 ${isReception ? 'hidden md:flex' : 'flex'}`}>
+            <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200">
               <span className="w-2 h-2 rounded-full bg-visu-mint animate-pulse"></span>
-              <span className="text-xs font-semibold text-slate-700 hidden sm:inline">En Línea</span>
-              <ShieldCheck className="w-3.5 h-3.5 text-visu-mint sm:hidden" />
+              <span className="text-xs font-semibold text-slate-700">En Línea</span>
             </div>
 
             <button
               onClick={handleLogout}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
-              title="Salir"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+              title="Cerrar sesión"
             >
               <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">Salir</span>
+              <span>Salir</span>
             </button>
           </div>
         </header>

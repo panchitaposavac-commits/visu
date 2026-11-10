@@ -45,9 +45,43 @@ export const AREAS_EVIDENCIA: AreaEvidencia[] = [
   'Llantas',
 ];
 
+// ==========================================
+// Modelos Multi-Taller SaaS
+// ==========================================
+export type RolMiembroTaller = 'propietario' | 'trabajador';
+
+export interface Taller {
+  id: string;
+  nombre: string;
+  rut_empresa?: string | null;
+  telefono?: string | null;
+  direccion?: string | null;
+  logo_url?: string | null;
+  activo: boolean;
+  creado_el?: string;
+  actualizado_el?: string;
+}
+
+export interface MiembroTaller {
+  id: string;
+  taller_id: string;
+  user_id: string;
+  rol: RolMiembroTaller;
+  activo: boolean;
+  creado_el?: string;
+  actualizado_el?: string;
+}
+
+export interface TallerSecuencia {
+  taller_id: string;
+  ultimo_folio: number;
+  actualizado_el?: string;
+}
+
 // Modelos de Base de Datos (PostgreSQL en Supabase)
 export interface Cliente {
   id?: number | string;
+  taller_id?: string;
   rut_dni: string;
   nombre: string;
   apellido: string;
@@ -57,6 +91,7 @@ export interface Cliente {
 
 export interface Vehiculo {
   id?: number | string;
+  taller_id?: string;
   cliente_id?: number | string;
   patente: string;
   marca: string;
@@ -68,21 +103,42 @@ export interface Vehiculo {
 
 export interface OrdenTrabajo {
   id?: number | string;
+  taller_id?: string;
   numero_ot?: number | string;
+  token_publico?: string;
+  token_activo?: boolean;
+  token_expira_el?: string | null;
   cliente_id?: number | string;
   vehiculo_id?: number | string;
   estado: EstadoOrden;
   tipo_servicio: TipoServicio;
   descripcion_cliente: string;
+  notas_diagnostico?: string | null;
   fecha_estimada_entrega: string;
+  fecha_aprobacion_cliente?: string | null;
+  comentarios_cliente_rechazo?: string | null;
 }
 
 export interface EvidenciaOrden {
   id?: number | string;
+  taller_id?: string;
   orden_trabajo_id?: number | string;
   etapa: 'recepcion' | 'proceso' | 'entrega';
   seccion: AreaEvidencia;
   url_archivo: string;
+}
+
+export interface HallazgoOt {
+  id?: string;
+  taller_id?: string;
+  orden_trabajo_id?: string;
+  titulo: string;
+  descripcion: string;
+  valor_neto?: number | null;
+  precio_neto?: number | null;
+  url_foto?: string | null;
+  foto_url?: string | null;
+  creado_el?: string;
 }
 
 // Estados del Formulario Wizard de Recepción

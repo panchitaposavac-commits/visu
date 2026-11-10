@@ -1,9 +1,16 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Visú - Gestión de Talleres Mecánicos',
   description: 'Trazabilidad y digitalización de servicios mecánicos de extremo a extremo.',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  interactiveWidget: 'resizes-content',
 };
 
 export default function RootLayout({

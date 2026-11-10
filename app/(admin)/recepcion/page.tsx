@@ -116,6 +116,7 @@ export default function RecepcionWizardPage() {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isPending, startTransition] = useTransition();
   const [globalError, setGlobalError] = useState<string | null>(null);
+  const [descripcionError, setDescripcionError] = useState<string | null>(null);
 
   // -----------------------------------------------------------------------
   // ESTADOS DEL FORMULARIO
@@ -194,12 +195,14 @@ export default function RecepcionWizardPage() {
     }
   }, [diagnosticData.descripcion_cliente]);
 
-  // Auto-Scroll Inteligente (Centro de Pantalla) al enfocar cualquier campo
+  // Manejo de foco táctil: previene saltos bruscos y desalineación con el teclado virtual
   const handleInputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    setTimeout(() => {
-      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 200);
+    const target = e.target;
+    if (typeof window !== 'undefined') {
+      requestAnimationFrame(() => {
+        target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    }
   };
 
   // Limpieza de reconocimiento de voz al desmontar
@@ -279,6 +282,7 @@ export default function RecepcionWizardPage() {
           ...prev,
           descripcion_cliente: newText,
         }));
+        setDescripcionError(null);
       };
 
       recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
@@ -348,6 +352,7 @@ export default function RecepcionWizardPage() {
           ...prev,
           descripcion_cliente: data.texto_ordenado,
         }));
+        setDescripcionError(null);
         setAiSuccessMessage('Texto estructurado con éxito por IA.');
         setTimeout(() => setAiSuccessMessage(null), 4000);
       }
@@ -366,6 +371,7 @@ export default function RecepcionWizardPage() {
     const { name, value } = e.target;
     setDiagnosticData((prev) => ({ ...prev, [name]: value }));
     if (globalError) setGlobalError(null);
+    if (descripcionError) setDescripcionError(null);
   };
 
   const handleClientChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -504,9 +510,15 @@ export default function RecepcionWizardPage() {
         return false;
       }
       if (!diagnosticData.descripcion_cliente.trim()) {
-        setGlobalError('Ingresa una descripción del requerimiento o problema indicado por el cliente.');
+        setDescripcionError('Por favor describe qué necesita el vehículo para continuar.');
+        setGlobalError(null);
+        if (textareaRef.current) {
+          textareaRef.current.focus();
+          textareaRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
         return false;
       }
+      setDescripcionError(null);
       return true;
     }
 
@@ -578,6 +590,7 @@ export default function RecepcionWizardPage() {
 
   const handlePrev = () => {
     setGlobalError(null);
+    setDescripcionError(null);
     setCurrentStep((prev) => Math.max(prev - 1, 1));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -796,10 +809,10 @@ export default function RecepcionWizardPage() {
       {/* ============================================================= */}
       {/* HEADER FIJO COMPACTO: TÚNEL DE INMERSIÓN (STICKY HEADER)      */}
       {/* ============================================================= */}
-      <header className="sticky top-0 bg-white z-50 flex justify-between items-center border-b border-slate-200 px-4 py-2">
-        {/* Lado izquierdo: Logo de Visú en formato pequeño */}
-        <div className="flex items-center gap-2">
-          <Link href="/recepcion" className="flex items-center">
+      <header className="sticky top-0 bg-white z-50 flex justify-between items-center border-b border-slate-200 px-4 py-2.5 shadow-2xs">
+        {/* Lado izquierdo: Logo de Visú y Progreso */}
+        <div className="flex items-center gap-2.5">
+          <Link href="/" className="flex items-center active:opacity-80 transition-opacity" title="Volver al Inicio">
             <Image
               src="/visu-logo.png"
               alt="Visú"
@@ -809,13 +822,13 @@ export default function RecepcionWizardPage() {
               className="h-6 w-auto object-contain"
             />
           </Link>
-          <span className="text-[10px] font-bold text-visu-blue bg-visu-mint/20 border border-visu-mint/40 px-2 py-0.5 rounded-md">
+          <span className="text-[10px] sm:text-[11px] font-bold text-visu-blue bg-visu-mint/20 border border-visu-mint/40 px-2 sm:px-2.5 py-0.5 rounded-full">
             Paso {currentStep}/5
           </span>
         </div>
 
-        {/* Lado derecho: Acción principal de avance compacto */}
-        <div className="flex items-center gap-2">
+        {/* Lado derecho: Acción rápida en escritorio (en móvil se reserva el botón principal al final del paso) */}
+        <div className="hidden sm:flex items-center gap-2">
           {currentStep < 5 ? (
             <button
               type="button"
@@ -855,49 +868,40 @@ export default function RecepcionWizardPage() {
         {/* (Renderizado condicional a partir del Paso 2 para UX Móvil)   */}
         {/* ------------------------------------------------------------- */}
       {currentStep > 1 && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-3.5 sm:p-5 shadow-2xs">
-          {/* Título & Badge de Paso */}
-          <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-visu-blue text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+        <div className="bg-white border border-slate-200 rounded-2xl p-3 sm:p-5 shadow-2xs">
+          {/* Título & Acción para Volver */}
+          <div className="flex items-center justify-between gap-2 mb-2 sm:mb-2.5">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-visu-blue text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
                 {currentStep}
               </div>
-              <div>
-                <h1 className="text-sm sm:text-lg font-bold text-slate-900 leading-tight">
-                  {WIZARD_STEPS[currentStep - 1].title}
-                </h1>
-              </div>
+              <h1 className="text-sm sm:text-base font-bold text-slate-900 truncate">
+                {WIZARD_STEPS[currentStep - 1].title}
+              </h1>
             </div>
 
-            <span className="text-xs font-bold text-visu-blue bg-visu-mint/20 border border-visu-mint/40 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg shrink-0">
-              Paso {currentStep} de 5
-            </span>
+            {/* Acción Volver al paso anterior */}
+            <button
+              type="button"
+              onClick={handlePrev}
+              className="text-xs font-semibold text-slate-600 hover:text-slate-900 active:text-visu-blue flex items-center gap-0.5 px-2 py-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
+              title="Volver al paso anterior"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+              <span>Volver</span>
+            </button>
           </div>
 
           {/* Barra de progreso lineal */}
-          <div className="w-full bg-slate-100 rounded-full h-1.5 sm:h-2 overflow-hidden mb-2 sm:mb-3">
+          <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
             <div
               className="bg-visu-mint h-full rounded-full transition-all duration-300 ease-out"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
 
-          {/* Móvil: Texto simplificado del paso actual */}
-          <div className="md:hidden flex items-center justify-between text-xs font-semibold text-slate-700 px-1 py-0.5">
-            <span>
-              Paso {currentStep} de 5: <strong className="text-visu-blue">{WIZARD_STEPS[currentStep - 1].short}</strong>
-            </span>
-            <button
-              type="button"
-              onClick={handlePrev}
-              className="text-[11px] text-visu-blue font-bold hover:underline"
-            >
-              ← Anterior
-            </button>
-          </div>
-
           {/* Desktop: Fila completa de pastillas de navegación */}
-          <div className="hidden md:grid md:grid-cols-5 gap-1.5 text-center">
+          <div className="hidden md:grid md:grid-cols-5 gap-1.5 text-center mt-3">
             {WIZARD_STEPS.map((stepItem) => {
               const isCompleted = currentStep > stepItem.step;
               const isCurrent = currentStep === stepItem.step;
@@ -910,6 +914,7 @@ export default function RecepcionWizardPage() {
                     if (stepItem.step < currentStep) {
                       setCurrentStep(stepItem.step);
                       setGlobalError(null);
+                      setDescripcionError(null);
                     }
                   }}
                   disabled={stepItem.step > currentStep}
@@ -917,7 +922,7 @@ export default function RecepcionWizardPage() {
                     isCurrent
                       ? 'bg-visu-blue text-white shadow-2xs'
                       : isCompleted
-                      ? 'bg-visu-mint/20 text-visu-blue font-bold hover:bg-visu-mint/30'
+                      ? 'bg-visu-mint/20 text-visu-blue font-bold hover:bg-visu-mint/30 cursor-pointer'
                       : 'text-slate-600 opacity-60 cursor-not-allowed'
                   }`}
                 >
@@ -964,34 +969,34 @@ export default function RecepcionWizardPage() {
 
             {/* Selector Visual de Tipo de Servicio */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-                Selecciona el Tipo de Servicio <span className="text-visu-blue font-bold">*</span>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                Tipo de Servicio <span className="text-visu-blue font-bold">*</span>
               </label>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                 {OPCIONES_TIPO_SERVICIO.map((opcion) => {
                   const isSelected = diagnosticData.tipo_servicio === opcion.value;
                   return (
                     <div
                       key={opcion.value}
                       onClick={() => setDiagnosticData((prev) => ({ ...prev, tipo_servicio: opcion.value }))}
-                      className={`cursor-pointer p-4 rounded-xl border-2 transition-all flex items-start gap-3 active:scale-[0.99] ${
+                      className={`cursor-pointer p-3 sm:p-3.5 rounded-xl border-2 transition-all flex items-start gap-2.5 sm:gap-3 active:scale-[0.99] ${
                         isSelected
                           ? 'border-visu-mint bg-visu-mint/10 ring-2 ring-visu-mint/20 shadow-xs'
                           : 'border-slate-200 bg-white hover:bg-slate-50'
                       }`}
                     >
                       <div
-                        className={`w-5 h-5 rounded-full border-2 mt-0.5 flex items-center justify-center shrink-0 ${
+                        className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 mt-0.5 flex items-center justify-center shrink-0 ${
                           isSelected ? 'border-visu-mint bg-visu-mint' : 'border-slate-300 bg-white'
                         }`}
                       >
                         {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-slate-950"></div>}
                       </div>
 
-                      <div>
-                        <p className="font-bold text-sm text-slate-900">{opcion.label}</p>
-                        <p className="text-xs text-slate-600 mt-0.5 leading-snug">
+                      <div className="min-w-0">
+                        <p className="font-bold text-xs sm:text-sm text-slate-900">{opcion.label}</p>
+                        <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5 leading-snug">
                           {opcion.description}
                         </p>
                       </div>
@@ -1001,20 +1006,25 @@ export default function RecepcionWizardPage() {
               </div>
             </div>
 
-            {/* Descripción / Motivo de Ingreso */}
-            <div>
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                  Descripción del Requerimiento / Síntomas <span className="text-visu-blue font-bold">*</span>
-                </label>
+            {/* Descripción / Requerimiento del Vehículo */}
+            <div className="space-y-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <h3 className="text-xs sm:text-sm font-bold text-slate-900">
+                    ¿Qué necesita el vehículo? <span className="text-visu-blue font-bold">*</span>
+                  </h3>
+                  <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">
+                    Describe el problema o el mantenimiento solicitado.
+                  </p>
+                </div>
 
-                <div className="flex items-center gap-1.5 sm:gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2 self-start sm:self-auto">
                   {/* Botón Dictado por Voz (Web Speech API) */}
                   {speechSupported && (
                     <button
                       type="button"
                       onClick={handleToggleListening}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer shadow-2xs active:scale-[0.98] ${
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer shadow-2xs active:scale-[0.98] ${
                         isListening
                           ? 'bg-red-50 hover:bg-red-100 active:bg-red-200 text-red-600 border border-red-300 ring-2 ring-red-400/20 font-semibold animate-pulse'
                           : 'bg-white hover:bg-slate-50 active:bg-slate-100 text-slate-700 border border-slate-200 font-medium'
@@ -1040,7 +1050,7 @@ export default function RecepcionWizardPage() {
                     type="button"
                     onClick={handleMejorarConIA}
                     disabled={!diagnosticData.descripcion_cliente.trim() || isOptimizing || isListening}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-visu-blue bg-visu-mint/20 hover:bg-visu-mint/30 active:bg-visu-mint/40 border border-visu-mint/40 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs active:scale-[0.98]"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold text-visu-blue bg-visu-mint/20 hover:bg-visu-mint/30 active:bg-visu-mint/40 border border-visu-mint/40 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs active:scale-[0.98]"
                     title="Estructurar redacción técnica con Inteligencia Artificial"
                   >
                     {isOptimizing ? (
@@ -1060,24 +1070,38 @@ export default function RecepcionWizardPage() {
 
               {/* Mensaje sutil de éxito de la IA */}
               {aiSuccessMessage && (
-                <div className="mb-2 p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs flex items-center gap-2 animate-in fade-in duration-200">
+                <div className="p-2 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs flex items-center gap-2 animate-in fade-in duration-200">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span className="font-medium">{aiSuccessMessage}</span>
                 </div>
               )}
 
-              <textarea
-                ref={textareaRef}
-                name="descripcion_cliente"
-                value={diagnosticData.descripcion_cliente}
-                onChange={handleDiagnosticChange}
-                onFocus={handleInputFocus}
-                rows={2}
-                placeholder="Detalla síntomas, ruidos, mantención o anomalías reportadas (escribe o presiona Dictar)..."
-                className="w-full px-3.5 py-2.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl resize-none transition-[height] duration-100"
-                style={{ minHeight: '76px' }}
-                required
-              />
+              <div className="relative">
+                <textarea
+                  ref={textareaRef}
+                  name="descripcion_cliente"
+                  value={diagnosticData.descripcion_cliente}
+                  onChange={handleDiagnosticChange}
+                  onFocus={handleInputFocus}
+                  rows={2}
+                  placeholder="Ej.: Cliente solicita cambio de aceite y filtros. Indica ruido al frenar. Revisar pastillas delanteras"
+                  className={`w-full px-3.5 py-2.5 text-sm sm:text-base font-medium text-slate-900 bg-white rounded-xl resize-none transition-all duration-100 placeholder:text-slate-400 ${
+                    descripcionError
+                      ? 'border-2 border-red-500 focus:border-red-600 focus:ring-2 focus:ring-red-400/20 bg-red-50/20'
+                      : 'border border-slate-200 focus:border-visu-blue focus:ring-2 focus:ring-visu-blue/20'
+                  }`}
+                  style={{ minHeight: '76px' }}
+                  required
+                />
+              </div>
+
+              {/* Mensaje de error contextual junto al campo */}
+              {descripcionError && (
+                <div className="flex items-center gap-1.5 text-red-600 text-xs font-semibold animate-in fade-in duration-150 pt-0.5">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+                  <span>{descripcionError}</span>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -1095,10 +1119,10 @@ export default function RecepcionWizardPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
-              {/* RUT / DNI */}
-              <div className="sm:col-span-2">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                  RUT / DNI <span className="text-visu-blue font-bold">*</span>
+              {/* RUT del cliente */}
+              <div className="sm:col-span-2 scroll-mt-20">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                  RUT del cliente <span className="text-visu-blue font-bold">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -1107,19 +1131,22 @@ export default function RecepcionWizardPage() {
                     value={clientData.rut_dni}
                     onChange={handleClientChange}
                     onFocus={handleInputFocus}
-                    placeholder="Ej: 12.345.678-9 (RUT / DNI del cliente)"
+                    placeholder="12.345.678-9"
+                    inputMode="text"
                     autoCapitalize="characters"
                     autoCorrect="off"
-                    className="w-full pl-12 pr-3.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl"
+                    spellCheck={false}
+                    className="w-full pl-11 pr-3.5 py-3 text-base sm:text-sm font-medium text-slate-900 bg-white border border-slate-200 focus:border-visu-blue focus:ring-2 focus:ring-visu-blue/20 rounded-xl"
+                    style={{ fontSize: '16px' }}
                     required
                   />
-                  <Shield className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 sm:top-3 pointer-events-none" />
+                  <Shield className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
               </div>
 
               {/* Nombre */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              <div className="scroll-mt-20">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
                   Nombre <span className="text-visu-blue font-bold">*</span>
                 </label>
                 <div className="relative">
@@ -1129,18 +1156,20 @@ export default function RecepcionWizardPage() {
                     value={clientData.nombre}
                     onChange={handleClientChange}
                     onFocus={handleInputFocus}
-                    placeholder="Nombre del cliente"
+                    placeholder="Nombre"
+                    autoCapitalize="words"
                     autoComplete="given-name"
-                    className="w-full pl-12 pr-3.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl"
+                    className="w-full pl-11 pr-3.5 py-3 text-base sm:text-sm font-medium text-slate-900 bg-white border border-slate-200 focus:border-visu-blue focus:ring-2 focus:ring-visu-blue/20 rounded-xl"
+                    style={{ fontSize: '16px' }}
                     required
                   />
-                  <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 sm:top-3 pointer-events-none" />
+                  <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
               </div>
 
               {/* Apellido */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              <div className="scroll-mt-20">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
                   Apellido <span className="text-visu-blue font-bold">*</span>
                 </label>
                 <div className="relative">
@@ -1150,19 +1179,21 @@ export default function RecepcionWizardPage() {
                     value={clientData.apellido}
                     onChange={handleClientChange}
                     onFocus={handleInputFocus}
-                    placeholder="Apellido del cliente"
+                    placeholder="Apellido"
+                    autoCapitalize="words"
                     autoComplete="family-name"
-                    className="w-full pl-12 pr-3.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl"
+                    className="w-full pl-11 pr-3.5 py-3 text-base sm:text-sm font-medium text-slate-900 bg-white border border-slate-200 focus:border-visu-blue focus:ring-2 focus:ring-visu-blue/20 rounded-xl"
+                    style={{ fontSize: '16px' }}
                     required
                   />
-                  <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 sm:top-3 pointer-events-none" />
+                  <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
               </div>
 
               {/* Teléfono / WhatsApp */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                  Teléfono / Celular <span className="text-visu-blue font-bold">*</span>
+              <div className="scroll-mt-20">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Teléfono / WhatsApp <span className="text-visu-blue font-bold">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -1172,18 +1203,19 @@ export default function RecepcionWizardPage() {
                     value={clientData.telefono}
                     onChange={handleClientChange}
                     onFocus={handleInputFocus}
-                    placeholder="+56 9 1234 5678 (WhatsApp / Contacto)"
+                    placeholder="+56 9 1234 5678"
                     autoComplete="tel"
-                    className="w-full pl-12 pr-3.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl"
+                    className="w-full pl-11 pr-3.5 py-3 text-base sm:text-sm font-medium text-slate-900 bg-white border border-slate-200 focus:border-visu-blue focus:ring-2 focus:ring-visu-blue/20 rounded-xl"
+                    style={{ fontSize: '16px' }}
                     required
                   />
-                  <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 sm:top-3 pointer-events-none" />
+                  <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
               </div>
 
               {/* Correo Electrónico */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              <div className="scroll-mt-20">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
                   Correo Electrónico <span className="text-visu-blue font-bold">*</span>
                 </label>
                 <div className="relative">
@@ -1194,14 +1226,16 @@ export default function RecepcionWizardPage() {
                     value={clientData.correo}
                     onChange={handleClientChange}
                     onFocus={handleInputFocus}
-                    placeholder="cliente@ejemplo.com (para envío digital de OT)"
+                    placeholder="cliente@ejemplo.com"
                     autoCapitalize="none"
                     autoCorrect="off"
+                    spellCheck={false}
                     autoComplete="email"
-                    className="w-full pl-12 pr-3.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl"
+                    className="w-full pl-11 pr-3.5 py-3 text-base sm:text-sm font-medium text-slate-900 bg-white border border-slate-200 focus:border-visu-blue focus:ring-2 focus:ring-visu-blue/20 rounded-xl"
+                    style={{ fontSize: '16px' }}
                     required
                   />
-                  <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 sm:top-3 pointer-events-none" />
+                  <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
               </div>
             </div>
@@ -1222,8 +1256,8 @@ export default function RecepcionWizardPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
               {/* Patente / Matrícula */}
-              <div className="sm:col-span-2 lg:col-span-1">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              <div className="sm:col-span-2 lg:col-span-1 scroll-mt-20">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
                   Patente / Matrícula <span className="text-visu-blue font-bold">*</span>
                 </label>
                 <div className="relative">
@@ -1237,16 +1271,17 @@ export default function RecepcionWizardPage() {
                     maxLength={10}
                     autoCapitalize="characters"
                     autoCorrect="off"
-                    className="w-full pl-12 pr-3.5 text-lg sm:text-base font-extrabold uppercase tracking-widest text-slate-900 rounded-xl"
+                    className="w-full pl-11 pr-3.5 py-3 text-lg sm:text-base font-extrabold uppercase tracking-widest text-slate-900 bg-white border border-slate-200 focus:border-visu-blue focus:ring-2 focus:ring-visu-blue/20 rounded-xl"
+                    style={{ fontSize: '16px' }}
                     required
                   />
-                  <Car className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 sm:top-3 pointer-events-none" />
+                  <Car className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
               </div>
 
               {/* Marca */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              <div className="scroll-mt-20">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
                   Marca <span className="text-visu-blue font-bold">*</span>
                 </label>
                 <input
@@ -1256,14 +1291,15 @@ export default function RecepcionWizardPage() {
                   onChange={handleVehicleChange}
                   onFocus={handleInputFocus}
                   placeholder="Ej: Toyota"
-                  className="w-full px-3.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl"
+                  className="w-full px-3.5 py-3 text-base sm:text-sm font-medium text-slate-900 bg-white border border-slate-200 focus:border-visu-blue focus:ring-2 focus:ring-visu-blue/20 rounded-xl"
+                  style={{ fontSize: '16px' }}
                   required
                 />
               </div>
 
               {/* Modelo */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              <div className="scroll-mt-20">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
                   Modelo <span className="text-visu-blue font-bold">*</span>
                 </label>
                 <input
@@ -1273,14 +1309,15 @@ export default function RecepcionWizardPage() {
                   onChange={handleVehicleChange}
                   onFocus={handleInputFocus}
                   placeholder="Ej: RAV4"
-                  className="w-full px-3.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl"
+                  className="w-full px-3.5 py-3 text-base sm:text-sm font-medium text-slate-900 bg-white border border-slate-200 focus:border-visu-blue focus:ring-2 focus:ring-visu-blue/20 rounded-xl"
+                  style={{ fontSize: '16px' }}
                   required
                 />
               </div>
 
               {/* Kilometraje */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              <div className="scroll-mt-20">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
                   Kilometraje <span className="text-visu-blue font-bold">*</span>
                 </label>
                 <div className="relative">
@@ -1293,16 +1330,17 @@ export default function RecepcionWizardPage() {
                     onFocus={handleInputFocus}
                     placeholder="Ej: 85000"
                     min={0}
-                    className="w-full pl-12 pr-3.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl"
+                    className="w-full pl-11 pr-3.5 py-3 text-base sm:text-sm font-medium text-slate-900 bg-white border border-slate-200 focus:border-visu-blue focus:ring-2 focus:ring-visu-blue/20 rounded-xl"
+                    style={{ fontSize: '16px' }}
                     required
                   />
-                  <Gauge className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 sm:top-3 pointer-events-none" />
+                  <Gauge className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
               </div>
 
               {/* Año */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              <div className="scroll-mt-20">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
                   Año <span className="text-visu-blue font-bold">*</span>
                 </label>
                 <input
@@ -1314,14 +1352,15 @@ export default function RecepcionWizardPage() {
                   onFocus={handleInputFocus}
                   min={1980}
                   max={new Date().getFullYear() + 1}
-                  className="w-full px-3.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl"
+                  className="w-full px-3.5 py-3 text-base sm:text-sm font-medium text-slate-900 bg-white border border-slate-200 focus:border-visu-blue focus:ring-2 focus:ring-visu-blue/20 rounded-xl"
+                  style={{ fontSize: '16px' }}
                   required
                 />
               </div>
 
               {/* Color */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              <div className="scroll-mt-20">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
                   Color <span className="text-visu-blue font-bold">*</span>
                 </label>
                 <div className="relative">
@@ -1332,10 +1371,11 @@ export default function RecepcionWizardPage() {
                     onChange={handleVehicleChange}
                     onFocus={handleInputFocus}
                     placeholder="Ej: Gris Plata"
-                    className="w-full pl-12 pr-3.5 text-base sm:text-sm font-medium text-slate-900 rounded-xl"
+                    className="w-full pl-11 pr-3.5 py-3 text-base sm:text-sm font-medium text-slate-900 bg-white border border-slate-200 focus:border-visu-blue focus:ring-2 focus:ring-visu-blue/20 rounded-xl"
+                    style={{ fontSize: '16px' }}
                     required
                   />
-                  <Palette className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 sm:top-3 pointer-events-none" />
+                  <Palette className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
               </div>
             </div>
@@ -1631,9 +1671,10 @@ export default function RecepcionWizardPage() {
             <button
               type="button"
               onClick={handleNext}
-              className="w-full sm:w-auto min-h-[50px] flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-visu-mint hover:bg-visu-mint/90 active:bg-visu-mint-dark text-slate-950 font-bold text-base transition-all shadow-md shadow-visu-mint/20 active:scale-[0.99] cursor-pointer"
+              className="w-full sm:w-auto min-h-[48px] flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-visu-mint hover:bg-visu-mint/90 active:bg-visu-mint-dark text-slate-950 font-bold text-sm sm:text-base transition-all shadow-md shadow-visu-mint/20 active:scale-[0.99] cursor-pointer"
             >
-              <span>Continuar a {WIZARD_STEPS[currentStep].title}</span>
+              <span>Continuar</span>
+              <span className="text-slate-800/80 font-semibold hidden sm:inline">a {WIZARD_STEPS[currentStep].title}</span>
               <ChevronRight className="w-4 h-4" />
             </button>
           ) : (
@@ -1641,7 +1682,7 @@ export default function RecepcionWizardPage() {
               type="button"
               onClick={handleSubmitFinal}
               disabled={isPending}
-              className="w-full sm:w-auto min-h-[52px] flex items-center justify-center gap-2 px-10 py-3 rounded-xl bg-visu-mint hover:bg-visu-mint/90 active:bg-visu-mint-dark text-slate-950 font-bold text-base transition-all shadow-md shadow-visu-mint/30 active:scale-[0.99] disabled:opacity-60 cursor-pointer"
+              className="w-full sm:w-auto min-h-[48px] flex items-center justify-center gap-2 px-8 py-3 rounded-xl bg-visu-mint hover:bg-visu-mint/90 active:bg-visu-mint-dark text-slate-950 font-bold text-sm sm:text-base transition-all shadow-md shadow-visu-mint/30 active:scale-[0.99] disabled:opacity-60 cursor-pointer"
             >
               {isPending ? (
                 <>

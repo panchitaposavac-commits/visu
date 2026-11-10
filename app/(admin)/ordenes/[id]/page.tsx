@@ -812,7 +812,7 @@ export default function DetalleOrdenPage({ params }: PageProps) {
           <div className="border-b-2 border-slate-900 pb-5 print:pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             {/* Logo y Nombre Institucional */}
             <div className="flex items-center gap-3.5">
-              <div className="flex items-center">
+              <Link href="/" title="Volver al Inicio" className="flex items-center transition-opacity hover:opacity-90">
                 <Image
                   src="/visu-logo.png"
                   alt="Visú"
@@ -821,7 +821,7 @@ export default function DetalleOrdenPage({ params }: PageProps) {
                   priority
                   className="h-10 w-auto object-contain"
                 />
-              </div>
+              </Link>
               <div className="border-l border-slate-200 pl-3">
                 <span className="text-[10px] font-bold tracking-wider uppercase bg-visu-mint/20 text-visu-blue px-2 py-0.5 rounded border border-visu-mint/50">
                   Taller Mecánico
